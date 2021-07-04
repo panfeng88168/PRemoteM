@@ -1,105 +1,68 @@
 # PRemoteM
+
 English | [中文](https://github.com/VShawn/PRemoteM/blob/Doc/ReadMe_zh-cn/readme.md)
 
+[![version](https://img.shields.io/github/v/release/vshawn/premotem?color=Green&include_prereleases)](https://github.com/VShawn/PRemoteM/releases)
+[![codebeat badge](https://codebeat.co/badges/c3e71ab7-bf2c-455b-9886-d5956723eed5)](https://codebeat.co/projects/github-com-vshawn-premotem-dev)
+[![issues](https://img.shields.io/github/issues/vshawn/premotem)](https://github.com/VShawn/PRemoteM/issues)
+[![license](https://img.shields.io/github/license/vshawn/premotem?color=blue)](https://github.com/VShawn/PRemoteM/blob/dev/LICENSE)
+![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Fvshawn%2Fpremotem&count_bg=%23E83D61&title_bg=%23102B3E&icon=github.svg&icon_color=%23CED8E1&title=&edge_flat=false)
 
-<p align="center">
-    <img src="https://github.com/VShawn/PRemoteM/raw/Doc/DocPic/PRemoteM.png" width="50" />
-</p>
+PRemoteM is a modern personal remote session manager and launcher. It is a single place to manage all your remote sessions supporting number of different protocols.
 
-```
-PRemoteM = Personal Remote Manager
-```
+## Features
 
+- Supports RDP, SSH, VNC, Telnet, (S)FTP, [RemoteApp](https://github.com/VShawn/PRemoteM/wiki/RemoteApp-program)
+- Quick and convenient remote session launcher
+- Multi-screen and HiDPI RDP connections
+- Detailed connection configuration: groups, icons, colors, connection scripts etc.
+- Multiple languages, themes and tabbed interface
+- [Import connections from mRemoteNG](https://raw.githubusercontent.com/VShawn/PRemoteM/Doc/DocPic/Migrate.jpg)
+- [Password encryption via RSA](https://github.com/VShawn/PRemoteM/wiki/Security)
+- Portable - just unpack and run
 
-PRemoteM is a utility that helps you manage remote sessions with HiDpi multi-screen RDP, SSH, Telnet and others remote protocols in a tab window.
-- :smiley:I am the old user of mRemoteNG.
-- :disappointed_relieved:I decided make a new remote tool in WPF after I bought two 4k monitors.
+## Installation
 
+Latest Version: 0.5.8.2101192131
 
+Use one of the following methods to install the application:
 
-<p align="center">
-    <img src="https://github.com/VShawn/PRemoteM/raw/Doc/DocPic/quickstart.gif" width="300"/>
-</p>
+- [GitHub release](https://github.com/VShawn/PRemoteM/releases)
+- [Microsoft Store (testing)](https://www.microsoft.com/store/productId/9PNMNF92JNFP)
+- [Chocolatey](https://chocolatey.org/packages/premotem): `choco install premotem`
 
-<p align="center">
-    <img src="https://github.com/VShawn/PRemoteM/raw/Doc/DocPic/tab.jpg" width="300"/>
-</p>
+### Requirements
 
-<p align="center">
-    <img src="https://github.com/VShawn/PRemoteM/raw/Doc/DocPic/multi-screen.jpg" width="700"/>
-</p>
-
-
-## Featutes
-----
-- RDP with multi-screen and HiDpi(Testd on **Win10 + 4k*2** to **Win2016**)
-- SSH,Telnet support via PuTTY
-- Tab support
-- UI themes support
-- Opening a remote session via shortcut
-- [Migare remote connections from mRemoteNG](https://github.com/VShawn/PRemoteM#Migare-from-mRemoteNG)
-- [Password can be encrypted by RSA](https://github.com/VShawn/PRemoteM#Encryption)
-
-# Lastet
-Latest Version: 0.4.8.2008150945
-
-- [Download](https://github.com/VShawn/PRemoteM/releases/tag/0.4.8.2008150945)
-
-## Requirements
-----
+- [Windows10 17763 and above](https://support.lenovo.com/us/en/solutions/ht502786)
 - [.NET Framework 4.8](https://dotnet.microsoft.com/download/dotnet-framework/net48)
 
-## Usage
-----
-Full instruction
+## Screenshots
 
-### open remote connection
-1. run PRemote.exe.
-2. click "+" button to add connection info.
-   
-    <img src="https://github.com/VShawn/PRemoteM/raw/Doc/DocPic/step1.jpg" width="200"/>
+### Main
 
-3. double click the **Server Card** to open a remote session.
-   
-    <img src="https://github.com/VShawn/PRemoteM/raw/Doc/DocPic/step2.jpg" width="200"/>
+<img src="https://raw.githubusercontent.com/VShawn/PRemoteM/Doc/DocPic/maindemo.png"/>
 
-4. or you can open a session by <kbd>Alt</kbd> + <kbd>M</kbd> and keyword.
+### Launcher(Alt + M) open RDP connection & resizing
 
-    <img src="https://github.com/VShawn/PRemoteM/raw/Doc/DocPic/step3.jpg" width="300"/>
+<img src="https://raw.githubusercontent.com/VShawn/PRemoteM/Doc/DocPic/quickstart.gif" width="400"/>
 
-### Encryption
+### Tab detach & SSH auto command after connected
 
-<img src="https://github.com/VShawn/PRemoteM/raw/Doc/DocPic/Encryption.jpg"/>
+<img src="https://raw.githubusercontent.com/VShawn/PRemoteM/Doc/DocPic/tab.gif" width="500" />
 
-By encrypting data, no one can get your remote password by open database directly.
-1. In <kbd>Setting</kbd> -> <kbd>Data & Security</kbd> page
-2. click <kbd>Encrypt</kbd> button and select a proper place to store your **Key File**.
+### RDP with Multi-monitors
 
-### Migare from mRemoteNG
-<img src="https://github.com/VShawn/PRemoteM/raw/Doc/DocPic/Migare.jpg"/>
+<img src="https://raw.githubusercontent.com/VShawn/PRemoteM/Doc/DocPic/multi-screen.jpg" width="500" />
 
-## Make contribution
-Help to make this tool more powerful.
-Your name woluld be shown below as a contributor.
+### RemoteApp via RDP
 
-### Code
-- Pull request are welcome.
+<img src="https://raw.githubusercontent.com/VShawn/PRemoteM/Doc/DocPic/RemoteApp/demo.jpg" width="800" />
 
-### Translate
-- UI
-  - Just duplicate the lang file [en-us.js](https://github.com/VShawn/PRemoteM/blob/master/PRM.Core/Languages/en-us.json), and translate it to your language. 
-  - Put your lang file to **C:\Users\YourName\AppData\Roaming\PRemoteM\Languages** for preview.
-    - click this button can go to the directory **C:\Users\YourName\AppData\Roaming\PRemoteM**
-    
-    <img src="https://github.com/VShawn/PRemoteM/raw/Doc/DocPic/GoToAppData.jpg" width="300"/>
-  - Share your lang file after job is done.
-- Doc
-  - [WIP]
+## Make PRemoteM Stronger
 
+If you like **PRemoteM**, help us make it stronger by doing any of the following:
 
-## Todo list
-
-- [ ] VNC
-- [ ] sFtp
-- [ ] upload PRemoteM to Microsoft Store
-- [ ] more features
+1. Simply star this repository
+2. [Help translation](https://github.com/VShawn/PRemoteM/wiki/Help-wanted:-Translation)
+3. [Buy a coffee](https://ko-fi.com/VShawn)
+4. [Join DEV](DEVELOP.md)

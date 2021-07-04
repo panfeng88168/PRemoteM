@@ -1,13 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
+using System.Timers;
 using System.Windows;
-using Shawn.Ulits;
+using Shawn.Utils;
+using Microsoft.Win32;
 
 namespace PRM.Core.Model
 {
@@ -43,7 +39,7 @@ namespace PRM.Core.Model
                     }
                 }
         }
-#if DEBUG
+#if DEV
         public const string AppName = "PRemoteM_Debug";
         public const string AppFullName = "PersonalRemoteManager_Debug";
 #else
@@ -54,7 +50,7 @@ namespace PRM.Core.Model
         public static ResourceDictionary AppResourceDictionary { get; set; }
 
 
-
+        private readonly Timer _checkUpdateTimer;
 
         private SystemConfig()
         {
@@ -63,11 +59,62 @@ namespace PRM.Core.Model
                 this.NewVersion = s;
                 this.NewVersionUrl = s1;
             };
-            var uc = new UpdateChecker();
-            uc.CheckUpdateAsync();
+
+
+            _lastScreenCount = System.Windows.Forms.Screen.AllScreens.Length;
+            _lastScreenRectangle = GetScreenSize();
+            SystemEvents.DisplaySettingsChanged += SystemEvents_DisplaySettingsChanged;
+
+            // check update every hours.
+            _checkUpdateTimer = new Timer()
+            {
+                Interval = 1000 * 3600,
+                AutoReset = true,
+            };
+            _checkUpdateTimer.Elapsed += (sender, args) =>
+            {
+                var uc = new UpdateChecker(GlobalEventHelper.OnNewVersionRelease);
+                uc.CheckUpdateAsync();
+            };
+            // check one time right now!
+            {
+                var uc = new UpdateChecker(GlobalEventHelper.OnNewVersionRelease);
+                uc.CheckUpdateAsync();
+            }
         }
 
-#region Update
+        ~SystemConfig()
+        {
+            SystemEvents.DisplaySettingsChanged -= SystemEvents_DisplaySettingsChanged;
+            _checkUpdateTimer?.Stop();
+        }
+
+        #region Resolution Watcher
+        private static int _lastScreenCount = 0;
+        private static System.Drawing.Rectangle _lastScreenRectangle = System.Drawing.Rectangle.Empty;
+        private void SystemEvents_DisplaySettingsChanged(object sender, EventArgs e)
+        {
+            SimpleLogHelper.Debug("Resolution Change: " + e);
+            var newScreenCount = System.Windows.Forms.Screen.AllScreens.Length;
+            var newScreenRectangle = GetScreenSize();
+            if (newScreenCount != _lastScreenCount
+               || newScreenRectangle.Width != _lastScreenRectangle.Width
+               || newScreenRectangle.Height != _lastScreenRectangle.Height)
+                GlobalEventHelper.OnScreenResolutionChanged?.Invoke();
+            _lastScreenCount = newScreenCount;
+            _lastScreenRectangle = newScreenRectangle;
+        }
+        private static System.Drawing.Rectangle GetScreenSize()
+        {
+            var entireSize = System.Drawing.Rectangle.Empty;
+            foreach (var screen in System.Windows.Forms.Screen.AllScreens)
+                entireSize = System.Drawing.Rectangle.Union(entireSize, screen.Bounds);
+            return entireSize;
+        }
+        #endregion
+
+
+        #region Update
         private string _newVersion = "";
         public string NewVersion
         {
@@ -81,7 +128,7 @@ namespace PRM.Core.Model
             get => _newVersionUrl;
             set => SetAndNotifyIfChanged(nameof(NewVersionUrl), ref _newVersionUrl, value);
         }
-#endregion
+        #endregion
 
 
         public SystemConfigLocality Locality = new SystemConfigLocality();
@@ -126,22 +173,44 @@ namespace PRM.Core.Model
 
 
         private SystemConfigTheme _theme = null;
+
         public SystemConfigTheme Theme
         {
             get => _theme;
             set => SetAndNotifyIfChanged(nameof(Theme), ref _theme, value);
+        }
+
+
+        private bool _stopAutoSaveConfig;
+        public bool StopAutoSaveConfig
+        {
+            get => _stopAutoSaveConfig;
+            set
+            {
+                _stopAutoSaveConfig = value;
+
+                General.StopAutoSave = value;
+                Language.StopAutoSave = value;
+                QuickConnect.StopAutoSave = value;
+                DataSecurity.StopAutoSave = value;
+                Theme.StopAutoSave = value;
+            }
+        }
+
+        public void Save()
+        {
+            Language.Save();
+            General.Save();
+            QuickConnect.Save();
+            DataSecurity.Save();
+            Theme.Save();
         }
     }
 
 
     public abstract class SystemConfigBase : NotifyPropertyChangedBase
     {
-        private object locker = new object();
-        protected bool StopAutoSave
-        {
-            get => _stopAutoSave;
-            set => _stopAutoSave = value;
-        }
+        public bool StopAutoSave { get; set; } = false;
 
         protected override void SetAndNotifyIfChanged<T>(string propertyName, ref T oldValue, T newValue)
         {
@@ -155,18 +224,15 @@ namespace PRM.Core.Model
         }
 
         protected Ini _ini = null;
-        private bool _stopAutoSave = false;
 
         protected SystemConfigBase(Ini ini)
         {
             _ini = ini;
         }
 
-
         public abstract void Save();
         public abstract void Load();
         public abstract void Update(SystemConfigBase newConfig);
-
         protected static void UpdateBase(SystemConfigBase old, SystemConfigBase newConfig, Type configType)
         {
             var t = configType;

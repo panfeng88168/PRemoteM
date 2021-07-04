@@ -7,7 +7,7 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Media;
 using PRM.Core.Protocol;
-using Shawn.Ulits;
+using Shawn.Utils;
 
 namespace PRM.Resources.Converter
 {
@@ -115,14 +115,14 @@ namespace PRM.Resources.Converter
 
 
 
-    public class ConverterTextWidthAndContent2FontSize : IMultiValueConverter
+    public class ConverterTextWidthAndContent2PresentationSize : IMultiValueConverter
     {
-        private static Size MeasureText(TextBlock tb, int fontsize)
+        private static Size MeasureText(TextBlock tb, int fontSize)
         {
             var formattedText = new FormattedText(tb.Text, CultureInfo.CurrentUICulture,
                 FlowDirection.LeftToRight,
                 new Typeface(tb.FontFamily, tb.FontStyle, tb.FontWeight, tb.FontStretch),
-                fontsize, Brushes.Black); // always uses MaxFontSize for desiredSize
+                fontSize, Brushes.Black); // always uses MaxFontSize for desiredSize
             return new Size(formattedText.Width, formattedText.Height);
         }
 
@@ -131,13 +131,15 @@ namespace PRM.Resources.Converter
         {
             try
             {
-                var tb = new TextBlock();
-                tb.Text = values[0].ToString();
-                tb.Width = int.Parse(values[1].ToString());
-                tb.FontFamily = (FontFamily)values[2];
-                tb.FontStyle = (FontStyle)values[3];
-                tb.FontWeight = (FontWeight)values[4];
-                tb.FontStretch = (FontStretch)values[5];
+                var tb = new TextBlock
+                {
+                    Text = values[0].ToString(),
+                    Width = int.Parse(values[1].ToString()),
+                    FontFamily = (FontFamily) values[2],
+                    FontStyle = (FontStyle) values[3],
+                    FontWeight = (FontWeight) values[4],
+                    FontStretch = (FontStretch) values[5]
+                };
                 var size = MeasureText(tb, 20);
                 double k = 1.0 * tb.Width / size.Width;
                 double fs = (int) (20 * k);
@@ -167,58 +169,43 @@ namespace PRM.Resources.Converter
 
 
 
-    public class ConverterStringIsContainXXX : IMultiValueConverter
+
+
+
+
+
+    public class ConverterColorHexString2Brush : IValueConverter
     {
-        #region IValueConverter 成员  
-        public object Convert(object[] values, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+        #region IValueConverter
+        public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
         {
-            try
-            {
-                var server = (ProtocolServerBase)values[0];
-                string keyWord = values[1].ToString();
-                string selectedGroup = values[2].ToString();
-
-                bool bGroupMatched = string.IsNullOrEmpty(selectedGroup) || server.GroupName == selectedGroup || server.GetType() == typeof(ProtocolServerNone);
-                if (!bGroupMatched)
-                    return false;
-
-                if (string.IsNullOrEmpty(keyWord))
-                    return true;
-                //var f1 = KeyWordMatchHelper.IsMatchPinyinKeyWords(server.DispName, keyWord, out var m1);
-                //if (f1)
-                //{
-                //    return true;
-                //}
-                //return false;
-
-
-                var keyWords = keyWord.Split(new string[]{" "}, StringSplitOptions.RemoveEmptyEntries);
-                var keyWordIsMatch = new List<bool>(keyWords.Length);
-                for (var i = 0; i < keyWords.Length; i++)
-                    keyWordIsMatch.Add(false);
-
-                var dispName = server.DispName;
-                var subTitle = server.SubTitle;
-                for (var i = 0; i < keyWordIsMatch.Count; i++)
-                {
-                    var f1 = dispName.IsMatchPinyinKeyWords(keyWords[i], out var m1);
-                    var f2 = subTitle.IsMatchPinyinKeyWords(keyWords[i], out var m2);
-                    keyWordIsMatch[i] = f1 || f2;
-                }
-
-                if (keyWordIsMatch.All(x => x == true))
-                    return true;
-                return false;
-            }
-            catch (Exception)
-            {
-                return true;
-            }
+            string hex = value.ToString();
+            var brush = ColorAndBrushHelper.ColorToMediaBrush(hex);
+            return brush;
         }
 
-        public object[] ConvertBack(object value, Type[] targetType, object parameter, System.Globalization.CultureInfo culture)
+        public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
         {
-            throw new NotSupportedException();
+            return "#FFFFFF";
+        }
+        #endregion
+    }
+
+
+
+    public class ConverterColorHexString2Color : IValueConverter
+    {
+        #region IValueConverter
+        public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+        {
+            string hex = value.ToString();
+            var brush = ColorAndBrushHelper.HexColorToMediaColor(hex);
+            return brush;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+        {
+            return "#FFFFFF";
         }
         #endregion
     }

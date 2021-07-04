@@ -2,31 +2,19 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Drawing.Imaging;
-using System.IO;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
 using Microsoft.Win32;
 using PRM.Core.Annotations;
 using PRM.Core.Model;
-using Shawn.Ulits;
+using Shawn.Utils;
 
 namespace PRM.Core.Resources.Controls
 {
-    /// <summary>
-    /// LogoSelector.xaml 的交互逻辑
-    /// </summary>
     public partial class LogoSelector : UserControl, INotifyPropertyChanged
     {
         #region INotifyPropertyChanged
@@ -65,7 +53,7 @@ namespace PRM.Core.Resources.Controls
 
 
 
-
+        public Action OnLogoChanged;
 
 
         private double _scaling = 1.0;
@@ -95,6 +83,7 @@ namespace PRM.Core.Resources.Controls
                     ReplaceChild(ref CanvasImage, ref CanvasWhiteBoard);
                 }
                 OnPropertyChanged(nameof(Scaling));
+                OnLogoChanged?.Invoke();
             }
         }
 
@@ -128,12 +117,13 @@ namespace PRM.Core.Resources.Controls
 
                 Scaling = Math.Min(CanvasWhiteBoard.Width / CanvasImage.Width, CanvasWhiteBoard.Height / CanvasImage.Height);
             }
+            OnLogoChanged?.Invoke();
         }
 
 
         public BitmapSource Logo
         {
-            set => SetImg(value);
+            //private set => SetImg(value);
             get
             {
                 if (Img.Source == null)
@@ -152,8 +142,6 @@ namespace PRM.Core.Resources.Controls
                 double y = (double)CanvasImage.GetValue(Canvas.TopProperty);
 
                 var startPoint = new PointF(0, 0);
-                double roiWidth = 0;
-                double roiHeight = 0;
                 var drawPoint = new PointF(0, 0);
                 if (x < 0)
                 {
@@ -176,6 +164,8 @@ namespace PRM.Core.Resources.Controls
                     startPoint.Y = 0;
                 }
 
+                double roiWidth = 0;
+                double roiHeight = 0;
                 if (x + resize.PixelWidth > CanvasWhiteBoard.Width)
                 {
                     roiWidth = CanvasWhiteBoard.Width - drawPoint.X;
@@ -224,8 +214,8 @@ namespace PRM.Core.Resources.Controls
         //鼠标相对于作为容器的Canvas控件CanvasWhiteBoard的坐标
         private System.Windows.Point mouseNowPosition = new System.Windows.Point();
 
-        private bool dragStarted = false;
-        private DateTime dragStartTime = DateTime.MinValue;
+        private bool _dragStarted = false;
+        private DateTime _dragStartTime = DateTime.MinValue;
         /// <summary>
         /// 记录移动起点
         /// </summary>
@@ -233,14 +223,14 @@ namespace PRM.Core.Resources.Controls
         /// <param name="e"></param>
         private void CanvasImage_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            dragStarted = true;
-            dragStartTime = DateTime.Now;
+            _dragStarted = true;
+            _dragStartTime = DateTime.Now;
             mouseStartPosition = e.GetPosition(CanvasImage);
         }
 
         private void CanvasWhiteBoard_OnMouseLeave(object sender, MouseEventArgs e)
         {
-            dragStarted = false;
+            _dragStarted = false;
         }
 
         /// <summary>
@@ -250,9 +240,10 @@ namespace PRM.Core.Resources.Controls
         /// <param name="e"></param>
         private void CanvasImage_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
-            dragStarted = false;
+            _dragStarted = false;
             ReplaceChild(ref CanvasImage, ref CanvasWhiteBoard);
             CanvasImage.ReleaseMouseCapture();
+            OnLogoChanged?.Invoke();
         }
 
         /// <summary>
@@ -265,7 +256,7 @@ namespace PRM.Core.Resources.Controls
             if (e.LeftButton == MouseButtonState.Pressed)
             {
                 // 消抖
-                if (dragStarted && (DateTime.Now - dragStartTime).Milliseconds > 50)
+                if (_dragStarted && (DateTime.Now - _dragStartTime).Milliseconds > 50)
                 {
                     Canvas c = CanvasImage;
                     mouseNowPosition = e.GetPosition(CanvasWhiteBoard);
@@ -292,11 +283,11 @@ namespace PRM.Core.Resources.Controls
         /// <summary>
         /// 上一次使用滚轮放大时间
         /// </summary>
-        private int LastMouseWhellTimestamp = 0;
+        private int _lastMouseWheelTimestamp = 0;
         /// <summary>
         /// 滚轮加速度
         /// </summary>
-        private double k = 1;
+        private double _k = 1;
         private void Window_OnMouseWheel(object sender, MouseWheelEventArgs e)
         {
             if (Img?.Source == null)
@@ -305,26 +296,26 @@ namespace PRM.Core.Resources.Controls
             //if (Mouse.RightButton == MouseButtonState.Pressed)
             {
                 // 连续滚轮加速度
-                if (e.Timestamp - LastMouseWhellTimestamp < 200)
+                if (e.Timestamp - _lastMouseWheelTimestamp < 200)
                 {
-                    k += 1.5;
-                    if (k > 15)
-                        k = 15;
+                    _k += 1.5;
+                    if (_k > 15)
+                        _k = 15;
                 }
-                else if (e.Timestamp - LastMouseWhellTimestamp < 1000)
+                else if (e.Timestamp - _lastMouseWheelTimestamp < 1000)
                 {
-                    k -= 1;
-                    if (k < 1)
-                        k = 1;
+                    _k -= 1;
+                    if (_k < 1)
+                        _k = 1;
                 }
                 else
                 {
-                    k = 1;
+                    _k = 1;
                 }
-                LastMouseWhellTimestamp = e.Timestamp;
+                _lastMouseWheelTimestamp = e.Timestamp;
 
                 double tmp = Scaling;
-                tmp *= 1 + e.Delta * 0.0001 * k;
+                tmp *= 1 + e.Delta * 0.0001 * _k;
 
                 if (CanvasImage.Width * Scaling < 5)
                     tmp = 5.0 / CanvasImage.Width;
@@ -433,14 +424,14 @@ namespace PRM.Core.Resources.Controls
     #region ChessboardBrushHelper
     static class ChessboardBrushHelper
     {
-        private static readonly object obj = new object();
-        private static Dictionary<int,ImageBrush> chessbordBrushes = new Dictionary<int, ImageBrush>();
+        private static readonly object _obj = new object();
+        private static readonly Dictionary<int,ImageBrush> _chessboardBrushes = new Dictionary<int, ImageBrush>();
         public static ImageBrush ChessboardBrush(int blockPixSize = 32)
         {
-            lock (obj)
+            lock (_obj)
             {
-                if (chessbordBrushes.ContainsKey(blockPixSize))
-                    return chessbordBrushes[blockPixSize];
+                if (_chessboardBrushes.ContainsKey(blockPixSize))
+                    return _chessboardBrushes[blockPixSize];
                 // 绘制透明背景
                 var wpen = System.Drawing.Brushes.White;
                 var gpen = System.Drawing.Brushes.LightGray;

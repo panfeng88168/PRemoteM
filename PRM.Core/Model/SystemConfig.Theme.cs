@@ -3,21 +3,26 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Input;
-using Newtonsoft.Json;
 using PRM.Core.Protocol.Putty;
 using PRM.Core.Resources.Theme;
-using PRM.Core.Ulits;
-using Shawn.Ulits;
+using Shawn.Utils;
 
 namespace PRM.Core.Model
 {
+    public enum EnumTabUI
+    {
+        ChromeLike,
+        Classical,
+    }
+
+    public enum EnumServerListPageUI
+    {
+        Card,
+        List,
+    }
+
     public sealed class SystemConfigTheme : SystemConfigBase
     {
         public SystemConfigTheme(ResourceDictionary appResourceDictionary, Ini ini) : base(ini)
@@ -25,15 +30,10 @@ namespace PRM.Core.Model
             Debug.Assert(appResourceDictionary != null);
             AppResourceDictionary = appResourceDictionary;
             Load();
-
-            //MainColor1 = "#f5cc84";
-            //MainBgColor = "#40568d";
-            //var rs1 = appResourceDictionary.MergedDictionaries.Where(o => o.Source != null && o.Source.AbsolutePath.ToLower().IndexOf("Theme/Default.xaml".ToLower()) >= 0).ToArray();
-            //RebuildColorTheme();
         }
         public readonly ResourceDictionary AppResourceDictionary = null;
 
-        private int _puttyFontSize = 12;
+        private int _puttyFontSize = 14;
         public int PuttyFontSize
         {
             get => _puttyFontSize;
@@ -112,6 +112,7 @@ namespace PRM.Core.Model
                 }
                 catch (Exception e)
                 {
+                    SimpleLogHelper.Debug(e);
                 }
             }
         }
@@ -157,6 +158,7 @@ namespace PRM.Core.Model
                 }
                 catch (Exception e)
                 {
+                    SimpleLogHelper.Error(e);
                 }
             }
         }
@@ -199,6 +201,21 @@ namespace PRM.Core.Model
         }
 
 
+        private EnumTabUI _tabUi = EnumTabUI.Classical;
+        public EnumTabUI TabUI
+        {
+            get => _tabUi;
+            set => SetAndNotifyIfChanged(nameof(TabUI), ref _tabUi, value);
+        }
+
+
+        private EnumServerListPageUI _serverListPageUi = EnumServerListPageUI.Card;
+        public EnumServerListPageUI ServerListPageUI
+        {
+            get => _serverListPageUi;
+            set => SetAndNotifyIfChanged(nameof(ServerListPageUI), ref _serverListPageUi, value);
+        }
+
         #region Interface
         private const string _sectionName = "Theme";
         public override void Save()
@@ -216,6 +233,8 @@ namespace PRM.Core.Model
             _ini.WriteValue(nameof(MainBgColorForeground).ToLower(), _sectionName, MainBgColorForeground);
             _ini.WriteValue(nameof(PuttyFontSize).ToLower(), _sectionName, PuttyFontSize.ToString());
             _ini.WriteValue(nameof(PuttyThemeName).ToLower(), _sectionName, PuttyThemeName);
+            _ini.WriteValue(nameof(TabUI).ToLower(), _sectionName, TabUI.ToString());
+            _ini.WriteValue(nameof(ServerListPageUI).ToLower(), _sectionName, ServerListPageUI.ToString());
             _ini.Save();
             ApplyPrmColorTheme();
         }
@@ -245,8 +264,15 @@ namespace PRM.Core.Model
 
             PuttyThemeName = _ini.GetValue(nameof(PuttyThemeName).ToLower(), _sectionName, PuttyThemeName);
             if (string.IsNullOrEmpty(PuttyThemeName))
-                PuttyThemeName = PuttyColorThemes.Get00__Default().Item1;
+                PuttyThemeName = PrmColorThemeNames.First();
             PuttyFontSize = _ini.GetValue(nameof(PuttyFontSize).ToLower(), _sectionName, PuttyFontSize);
+
+
+            if (Enum.TryParse<EnumTabUI>(_ini.GetValue(nameof(TabUI).ToLower(), _sectionName, TabUI.ToString()), out var tu))
+                TabUI = tu;
+
+            if (Enum.TryParse<EnumServerListPageUI>(_ini.GetValue(nameof(ServerListPageUI).ToLower(), _sectionName, ServerListPageUI.ToString()), out var slu))
+                ServerListPageUI = slu;
 
             StopAutoSave = false;
             ApplyPrmColorTheme();
@@ -257,8 +283,8 @@ namespace PRM.Core.Model
             UpdateBase(this, newConfig, typeof(SystemConfigTheme));
         }
 
-        private Dictionary<string, List<PuttyRegOptionItem>> _puttyThemes = new Dictionary<string, List<PuttyRegOptionItem>>();
-        public List<PuttyRegOptionItem> SelectedPuttyTheme
+        private Dictionary<string, List<PuttyOptionItem>> _puttyThemes = new Dictionary<string, List<PuttyOptionItem>>();
+        public List<PuttyOptionItem> SelectedPuttyTheme
         {
             get
             {
@@ -290,7 +316,7 @@ namespace PRM.Core.Model
                     rd[key] = value;
             }
             var rs = AppResourceDictionary.MergedDictionaries.Where(o =>
-                (o.Source != null && o.Source.AbsolutePath.ToLower().IndexOf("Theme/Default.xaml".ToLower()) >= 0)
+                (o.Source != null && o.Source.IsAbsoluteUri && o.Source.AbsolutePath.ToLower().IndexOf("Theme/Default.xaml".ToLower()) >= 0)
                 || o[resourceTypeKey]?.ToString() == resourceTypeValue).ToArray();
             try
             {
@@ -346,26 +372,6 @@ namespace PRM.Core.Model
 
 
         #region CMD
-        private RelayCommand _cmdPuttyThemeCustomize;
-        public RelayCommand CmdPuttyThemeCustomize
-        {
-            get
-            {
-                if (_cmdPuttyThemeCustomize == null)
-                {
-                    _cmdPuttyThemeCustomize = new RelayCommand((o) =>
-                    {
-                        var puttyTheme = SelectedPuttyTheme;
-                        if (!Directory.Exists(PuttyColorThemes.ThemeRegFileFolder))
-                            Directory.CreateDirectory(PuttyColorThemes.ThemeRegFileFolder);
-                        var fi = puttyTheme.ToRegFile(Path.Combine(PuttyColorThemes.ThemeRegFileFolder, PuttyThemeName + ".reg"));
-                        if (fi != null)
-                            System.Diagnostics.Process.Start("notepad.exe", fi.FullName);
-                    });
-                }
-                return _cmdPuttyThemeCustomize;
-            }
-        }
 
         private RelayCommand _cmdPrmThemeReset;
         public RelayCommand CmdPrmThemeReset
@@ -380,6 +386,32 @@ namespace PRM.Core.Model
                     });
                 }
                 return _cmdPrmThemeReset;
+            }
+        }
+
+
+        private RelayCommand _cmdToggleServerListPageUi;
+        public RelayCommand CmdToggleServerListPageUI
+        {
+            get
+            {
+                if (_cmdToggleServerListPageUi == null)
+                {
+                    _cmdToggleServerListPageUi = new RelayCommand((o) =>
+                    {
+                        var array = (EnumServerListPageUI[])Enum.GetValues(typeof(EnumServerListPageUI));
+                        for (var i = 0; i < array.Length; i++)
+                        {
+                            var e = array[i];
+                            if (ServerListPageUI == e)
+                            {
+                                ServerListPageUI = i + 1 < array.Length ? array[i + 1] : array[0];
+                                break;
+                            }
+                        }
+                    });
+                }
+                return _cmdToggleServerListPageUi;
             }
         }
         #endregion

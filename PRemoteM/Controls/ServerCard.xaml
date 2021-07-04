@@ -14,6 +14,7 @@
         <Grid Name="DispServerContext">
             <Grid.InputBindings>
                 <MouseBinding MouseAction="LeftDoubleClick" Command="{Binding CmdConnServer}"></MouseBinding>
+                <MouseBinding MouseAction="RightClick" Command="{Binding CmdEditServer}"></MouseBinding>
             </Grid.InputBindings>
             <Grid.Style>
                 <Style TargetType="Grid">
@@ -47,15 +48,14 @@
                     </Grid.RowDefinitions>
 
                     <Grid Grid.Row="0" Grid.RowSpan="3">
-                        <Image Source="{Binding Server.IconImg}" 
-                               Width="{Binding Path=Width, RelativeSource={RelativeSource FindAncestor,AncestorType=Grid}}" 
+                        <Image Source="{Binding Server.IconImg}" Width="110" Height="110"
                                Stretch="UniformToFill">
                             <Image.Style>
                                 <Style TargetType="Image">
                                     <Setter Property="RenderTransform">
                                         <Setter.Value>
                                             <TransformGroup>
-                                                <ScaleTransform ScaleX="1.0" ScaleY="1.0" CenterX="50" CenterY="50"></ScaleTransform>
+                                                <ScaleTransform ScaleX="1.0" ScaleY="1.0" CenterX="65" CenterY="65"></ScaleTransform>
                                                 <RotateTransform Angle="0"></RotateTransform>
                                             </TransformGroup>
                                         </Setter.Value>
@@ -65,7 +65,7 @@
                                             <Setter Property="RenderTransform">
                                                 <Setter.Value>
                                                     <TransformGroup>
-                                                        <ScaleTransform ScaleX="1.5" ScaleY="1.5" CenterX="72" CenterY="72"></ScaleTransform>
+                                                        <ScaleTransform ScaleX="1.1" ScaleY="1.1" CenterX="65" CenterY="65"></ScaleTransform>
                                                     </TransformGroup>
                                                 </Setter.Value>
                                             </Setter>
@@ -74,7 +74,7 @@
                                             <Setter Property="RenderTransform">
                                                 <Setter.Value>
                                                     <TransformGroup>
-                                                        <ScaleTransform ScaleX="1.5" ScaleY="1.5" CenterX="72" CenterY="72"></ScaleTransform>
+                                                        <ScaleTransform ScaleX="1.1" ScaleY="1.1" CenterX="65" CenterY="65"></ScaleTransform>
                                                     </TransformGroup>
                                                 </Setter.Value>
                                             </Setter>
@@ -87,7 +87,7 @@
 
                     <Grid Grid.Row="0" Grid.RowSpan="3">
                         <TextBlock Name="TbServerType" Opacity="0.3"
-                               FontWeight="Bold" Text="{Binding Server.ProtocolDisplayName}" 
+                               FontWeight="Bold" Text="{Binding Server.ProtocolDisplayNameInShort}" 
                                Width="40"
                                TextAlignment="Center"
                                HorizontalAlignment="Left" VerticalAlignment="Top">
@@ -95,7 +95,7 @@
                                 <SolidColorBrush Color="#ccc"></SolidColorBrush>
                             </TextBlock.Foreground>
                             <TextBlock.FontSize>
-                                <MultiBinding Converter="{StaticResource ConverterTextWidthAndContent2FontSize}" ConverterParameter="FontSize">
+                                <MultiBinding Converter="{StaticResource ConverterTextWidthAndContent2PresentationSize}" ConverterParameter="FontSize">
                                     <Binding RelativeSource="{RelativeSource Self}" Path="Text"></Binding>
                                     <Binding RelativeSource="{RelativeSource Self}" Path="Width"></Binding>
                                     <Binding RelativeSource="{RelativeSource Self}" Path="FontFamily"></Binding>
@@ -105,7 +105,7 @@
                                 </MultiBinding>
                             </TextBlock.FontSize>
                             <TextBlock.Style>
-                                <Style TargetType="TextBlock">
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource TextBlockBase}">
                                     <Setter Property="RenderTransform">
                                         <Setter.Value>
                                             <TransformGroup>
@@ -189,9 +189,35 @@
 
                         <Grid Name="GridNameBar" Grid.Row="2" Background="{Binding ElementName=CardRealBorder,Path=BorderBrush}" >
                             <Grid HorizontalAlignment="Center" Margin="0 4 0 0">
-                                <TextBlock VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Text="{Binding Server.DispName}">
+                                <TextBlock VerticalAlignment="Center" FontSize="12" TextTrimming="CharacterEllipsis" Text="{Binding Server.DispName}">
                                     <TextBlock.Style>
-                                        <Style TargetType="TextBlock">
+                                        <Style TargetType="TextBlock" BasedOn="{StaticResource TextBlockBase}">
+                                            <Setter Property="Foreground" Value="{DynamicResource MainColor1Brush}"></Setter>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding ElementName=CardRealBorder,Path=IsMouseOver}" Value="True">
+                                                    <Setter Property="Foreground" Value="{DynamicResource MainColor2Brush}"></Setter>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding ElementName=CardNameBarMask,Path=IsMouseOver}" Value="True">
+                                                    <Setter Property="Foreground" Value="{DynamicResource MainColor2Brush}"></Setter>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding ElementName=PopupCardSettingMenu,Path=IsOpen}" Value="True">
+                                                    <Setter Property="Foreground" Value="{DynamicResource MainColor2Brush}"></Setter>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                    <TextBlock.Effect>
+                                        <DropShadowEffect ShadowDepth="0"
+                                                          Direction="0"
+                                                          Color="{DynamicResource MainColor1Darker}"
+                                                          Opacity="10"
+                                                          BlurRadius="3"
+                                        />
+                                    </TextBlock.Effect>
+                                </TextBlock>
+                                <TextBlock VerticalAlignment="Center" FontSize="12" TextTrimming="CharacterEllipsis" Text="{Binding Server.DispName}">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock" BasedOn="{StaticResource TextBlockBase}">
                                             <Setter Property="Foreground" Value="{DynamicResource MainColor1ForegroundBrush}"></Setter>
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding ElementName=CardRealBorder,Path=IsMouseOver}" Value="True">
@@ -216,7 +242,7 @@
                                     BorderThickness="0"
                                     Click="BtnSettingMenu_OnClick">
                                     <controls:ButtonEx.Style>
-                                        <Style TargetType="{x:Type controls:ButtonEx}" BasedOn="{StaticResource MainColor1Button}">
+                                        <Style TargetType="controls:ButtonEx" BasedOn="{StaticResource MainColor1Button}">
                                             <Setter Property="Visibility" Value="Hidden"></Setter>
                                             <Setter Property="Template">
                                                 <Setter.Value>
@@ -283,7 +309,6 @@
                                             <StackPanel>
                                                 <controls:ButtonEx Click="ButtonEditServer_OnClick" Content="{DynamicResource server_card_operate_edit}"></controls:ButtonEx>
                                                 <controls:ButtonEx Click="ButtonDuplicateServer_OnClick" Content="{DynamicResource server_card_operate_duplicate}"></controls:ButtonEx>
-                                                <controls:ButtonEx Click="ButtonExportToFile_OnClick" Content="{DynamicResource server_card_operate_export_to_prmj}"></controls:ButtonEx>
                                             </StackPanel>
                                         </Grid>
                                     </Border>
@@ -297,7 +322,7 @@
                 <Grid Name="CardNameBarMask" VerticalAlignment="Bottom" Height="20" Background="Black">
                     <Grid.Style>
                         <Style TargetType="Grid">
-                            <Setter Property="Opacity" Value="0.2"></Setter>
+                            <Setter Property="Opacity" Value="0.1"></Setter>
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding ElementName=CardRealBorder,Path=IsMouseOver}" Value="True">
                                     <Setter Property="Visibility" Value="Hidden"></Setter>

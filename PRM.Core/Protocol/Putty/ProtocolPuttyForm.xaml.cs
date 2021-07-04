@@ -15,13 +15,10 @@ using PRM.Core.Protocol.Putty.Telnet;
 
 namespace PRM.Core.Protocol.Putty
 {
-    /// <summary>
-    /// ServerRDPEditForm.xaml 的交互逻辑
-    /// </summary>
     public partial class ProtocolPuttyForm : ProtocolServerFormBase
     {
         public readonly ProtocolServerBase Vm;
-        public ProtocolPuttyForm(ProtocolServerBase vm) : base()
+        public ProtocolPuttyForm(ProtocolServerBase vm) : base(vm)
         {
             InitializeComponent();
             Vm = vm;
@@ -29,7 +26,6 @@ namespace PRM.Core.Protocol.Putty
 
             GridUserName.Visibility = Visibility.Collapsed;
             GridPwd.Visibility = Visibility.Collapsed;
-            SpSsh.Visibility = Visibility.Collapsed;
             GridPrivateKey.Visibility = Visibility.Collapsed;
 
 
@@ -38,8 +34,7 @@ namespace PRM.Core.Protocol.Putty
             {
                 GridPrivateKey.Visibility =
                 GridUserName.Visibility =
-                    GridPwd.Visibility =
-                SpSsh.Visibility = Visibility.Visible;
+                    GridPwd.Visibility =  Visibility.Visible;
             }
 
 
@@ -57,28 +52,6 @@ namespace PRM.Core.Protocol.Putty
                     CbUsePrivateKey.IsChecked = true;
                 }
             }
-        }
-
-        public override bool CanSave()
-        {
-            if ( Vm.GetType().BaseType == typeof(ProtocolServerWithAddrPortUserPwdBase))
-            {
-                var protocol = (ProtocolServerWithAddrPortUserPwdBase) Vm;
-                if (!string.IsNullOrEmpty(protocol.Address?.Trim())
-                    && !string.IsNullOrEmpty(protocol.UserName?.Trim())
-                    && protocol.GetPort() > 0 && protocol.GetPort() < 65536)
-                    return true;
-                return false;
-            }
-            if ( Vm.GetType().BaseType == typeof(ProtocolServerWithAddrPortBase))
-            {
-                var protocol = (ProtocolServerWithAddrPortBase) Vm;
-                if (!string.IsNullOrEmpty(protocol.Address?.Trim())
-                    && protocol.GetPort() > 0 && protocol.GetPort() < 65536)
-                    return true;
-                return false;
-            }
-            return false;
         }
 
         private void ButtonOpenPrivateKey_OnClick(object sender, RoutedEventArgs e)

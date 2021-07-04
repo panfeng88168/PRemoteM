@@ -1,28 +1,44 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Linq;
 using System.Windows;
-using System.Windows.Controls;
 using Dragablz;
 using PRM.Core.Model;
-using PRM.Core.Protocol;
-using PRM.Core.Ulits.DragablzTab;
+using Shawn.Utils.DragablzTab;
 using PRM.Model;
-using PRM.View;
-using Shawn.Ulits;
-using Shawn.Ulits.RDP;
+using PRM.View.TabWindow;
+using Shawn.Utils;
 using NotifyPropertyChangedBase = PRM.Core.NotifyPropertyChangedBase;
 
 namespace PRM.ViewModel
 {
-    public class VmTabWindow : NotifyPropertyChangedBase
+    public class VmTabWindow : NotifyPropertyChangedBase, IDisposable
     {
         public readonly string Token;
         public VmTabWindow(string token)
         {
             Token = token;
-            Items.CollectionChanged += (sender, args) =>
-                RaisePropertyChanged(nameof(BtnCloseAllVisibility));
+            Items.CollectionChanged += ItemsOnCollectionChanged;
+        }
+
+        private void ItemsOnCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            RaisePropertyChanged(nameof(BtnCloseAllVisibility));
+        }
+
+        public void Dispose()
+        {
+            SelectedItem = null;
+            foreach (var item in Items.ToArray())
+            {
+                if (item.Content is IDisposable dp)
+                {
+                    dp.Dispose();
+                }
+            }
+            Items.CollectionChanged -= ItemsOnCollectionChanged;
+            Items.Clear();
         }
 
         private string _tag = "";
@@ -93,6 +109,12 @@ namespace PRM.ViewModel
                     this.Title = Tag + " - " + SelectedItem.Header;
                 else
                     this.Title = SelectedItem.Header + " - " + SystemConfig.AppName;
+#if DEV
+                if (!string.IsNullOrEmpty(Tag))
+                    this.Title = Tag + " - " + SelectedItem.Header;
+                else
+                    this.Title = SelectedItem.Header + " - PRemoteM";
+#endif
             }
         }
 
@@ -114,22 +136,6 @@ namespace PRM.ViewModel
             }
         }
 
-        private RelayCommand _cmdClose;
-        public RelayCommand CmdClose
-        {
-            get
-            {
-                if (_cmdClose == null)
-                {
-                    _cmdClose = new RelayCommand((o) =>
-                    {
-                        RemoteWindowPool.Instance.DelTabWindow(Token);
-                    }, o => this.SelectedItem != null);
-                }
-                return _cmdClose;
-            }
-        }
-
 
         private RelayCommand _cmdIsTagEditToggle;
         public RelayCommand CmdIsTagEditToggle
@@ -146,6 +152,125 @@ namespace PRM.ViewModel
                 return _cmdIsTagEditToggle;
             }
         }
+
+
+        private RelayCommand _cmdInvokeLauncher;
+        public RelayCommand CmdInvokeLauncher
+        {
+            get
+            {
+                if (_cmdInvokeLauncher == null)
+                {
+                    _cmdInvokeLauncher = new RelayCommand((o) =>
+                    {
+                        App.SearchBoxWindow?.ShowMe(this.Token);
+                    }, o => this.SelectedItem != null);
+                }
+                return _cmdInvokeLauncher;
+            }
+        }
+
+        private RelayCommand _cmdShowTabByIndex;
+        public RelayCommand CmdShowTabByIndex
+        {
+            get
+            {
+                if (_cmdShowTabByIndex == null)
+                {
+                    _cmdShowTabByIndex = new RelayCommand((o) =>
+                    {
+                        if (int.TryParse(o.ToString(), out int i))
+                        {
+                            if (i > 0 && i <= Items.Count)
+                            {
+                                SelectedItem = Items[i - 1];
+                            }
+                        }
+                    }, o => this.SelectedItem != null);
+                }
+                return _cmdShowTabByIndex;
+            }
+        }
+
+        private RelayCommand _cmdGoMinimize;
+        public RelayCommand CmdGoMinimize
+        {
+            get
+            {
+                if (_cmdGoMinimize == null)
+                {
+                    _cmdGoMinimize = new RelayCommand((o) =>
+                    {
+                        if (o is Window window)
+                        {
+                            window.WindowState = WindowState.Minimized;
+                            SelectedItem.Content.ToggleAutoResize(false);
+                        }
+                    });
+                }
+                return _cmdGoMinimize;
+            }
+        }
+
+
+        private RelayCommand _cmdGoMaximize;
+        public RelayCommand CmdGoMaximize
+        {
+            get
+            {
+                if (_cmdGoMaximize == null)
+                {
+                    _cmdGoMaximize = new RelayCommand((o) =>
+                    {
+                        if (o is Window window)
+                            window.WindowState = (window.WindowState == WindowState.Normal) ? WindowState.Maximized : WindowState.Normal;
+                    });
+                }
+                return _cmdGoMaximize;
+            }
+        }
+
+
+        private RelayCommand _cmdCloseAll;
+        public RelayCommand CmdCloseAll
+        {
+            get
+            {
+                if (_cmdCloseAll == null)
+                {
+                    _cmdCloseAll = new RelayCommand((o) =>
+                    {
+                        RemoteWindowPool.Instance.DelTabWindow(Token);
+                    });
+                }
+                return _cmdCloseAll;
+            }
+        }
+
+
+
+        private RelayCommand _cmdClose;
+        public RelayCommand CmdClose
+        {
+            get
+            {
+                if (_cmdClose == null)
+                {
+                    _cmdClose = new RelayCommand((o) =>
+                    {
+                        if (SelectedItem != null)
+                        {
+                            RemoteWindowPool.Instance.DelProtocolHostInSyncContext(SelectedItem?.Content?.ConnectionId);
+                        }
+                        else
+                        {
+                            CmdCloseAll.Execute();
+                        }
+                    }, o => this.SelectedItem != null);
+                }
+                return _cmdClose;
+            }
+        }
         #endregion
     }
 
@@ -155,15 +280,24 @@ namespace PRM.ViewModel
         public INewTabHost<Window> GetNewHost(IInterTabClient interTabClient, object partition, TabablzControl source)
         {
             string token = DateTime.Now.Ticks.ToString();
-            var v = new TabWindow(token);
-            RemoteWindowPool.Instance.AddTab(v);
-            return new NewTabHost<Window>(v, v.TabablzControl);
+            if (SystemConfig.Instance.Theme.TabUI == EnumTabUI.ChromeLike)
+            {
+                var v = new TabWindowChrome(token);
+                RemoteWindowPool.Instance.AddTab(v);
+                return new NewTabHost<Window>(v, v.TabablzControl);
+            }
+            else
+            {
+                var v = new TabWindowClassical(token);
+                RemoteWindowPool.Instance.AddTab(v);
+                return new NewTabHost<Window>(v, v.TabablzControl);
+            }
         }
         public TabEmptiedResponse TabEmptiedHandler(TabablzControl tabControl, Window window)
         {
-            if (window is TabWindow tab)
+            if (window is TabWindowBase tab)
             {
-                RemoteWindowPool.Instance.DelTabWindow(tab.Vm.Token);
+                RemoteWindowPool.Instance.DelTabWindow(tab.GetViewModel().Token);
             }
             return TabEmptiedResponse.CloseWindowOrLayoutBranch;
         }

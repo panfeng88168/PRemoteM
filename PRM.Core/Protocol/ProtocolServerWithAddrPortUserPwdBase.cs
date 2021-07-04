@@ -1,22 +1,10 @@
-﻿using System;
-using System.Diagnostics;
-using System.Drawing;
-using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using ColorPickerWPF.Code;
-using Newtonsoft.Json;
-using PRM.Core.Model;
-using Shawn.Ulits;
-using Brush = System.Drawing.Brush;
-using Color = System.Windows.Media.Color;
+﻿using PRM.Core.Model;
 
 namespace PRM.Core.Protocol
 {
     public abstract class ProtocolServerWithAddrPortUserPwdBase : ProtocolServerWithAddrPortBase
     {
-        protected ProtocolServerWithAddrPortUserPwdBase(string protocol, string classVersion, string protocolDisplayName, bool onlyOneInstance = true) : base(protocol, classVersion, protocolDisplayName, onlyOneInstance)
+        protected ProtocolServerWithAddrPortUserPwdBase(string protocol, string classVersion, string protocolDisplayName, string protocolDisplayNameInShort = "") : base(protocol, classVersion, protocolDisplayName, protocolDisplayNameInShort)
         {
         }
 
@@ -49,6 +37,7 @@ namespace PRM.Core.Protocol
         {
             return $"@{Address}:{Port} ({UserName})";
         }
+
         #endregion
     }
 }

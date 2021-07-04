@@ -5,30 +5,39 @@
 
 
     <Style TargetType="Control" x:Key="ControlBase">
+        <Setter Property="FontSize" Value="12"></Setter>
         <Setter Property="FontFamily" Value="Microsoft YaHei"/>
         <Setter Property="FocusVisualStyle" Value="{x:Null}"></Setter>
         <Setter Property="Foreground" Value="{DynamicResource MainBgColorForegroundBrush}"></Setter>
     </Style>
     <Style TargetType="Button" x:Key="ButtonBase">
+        <Setter Property="FontSize" Value="12"></Setter>
         <Setter Property="Focusable" Value="False"/>
         <Setter Property="FocusVisualStyle" Value="{x:Null}"></Setter>
         <Setter Property="Foreground" Value="{DynamicResource MainBgColorForegroundBrush}"></Setter>
     </Style>
     <Style TargetType="TextBox" x:Key="TextBoxBase">
+        <Setter Property="FontSize" Value="12"></Setter>
         <Setter Property="Foreground" Value="{DynamicResource MainBgColorForegroundBrush}"></Setter>
         <Setter Property="VerticalContentAlignment" Value="Center"></Setter>
     </Style>
+    <Style TargetType="TextBlock" x:Key="TextBlockBase">
+        <Setter Property="FontSize" Value="12"></Setter>
+    </Style>
     <Style TargetType="CheckBox" x:Key="CheckBoxBase">
+        <Setter Property="FontSize" Value="12"></Setter>
         <Setter Property="FocusVisualStyle" Value="{x:Null}"></Setter>
         <Setter Property="Foreground" Value="{DynamicResource MainBgColorForegroundBrush}"></Setter>
         <Setter Property="TextElement.Foreground" Value="{DynamicResource MainBgColorForegroundBrush}"></Setter>
         <Setter Property="VerticalAlignment" Value="Center"></Setter>
     </Style>
     <Style TargetType="RadioButton" x:Key="RadioButtonBase">
+        <Setter Property="FontSize" Value="12"></Setter>
         <Setter Property="FocusVisualStyle" Value="{x:Null}"></Setter>
         <Setter Property="Foreground" Value="{DynamicResource MainBgColorForegroundBrush}"></Setter>
     </Style>
     <Style TargetType="TextElement" x:Key="TextElementBase">
+        <Setter Property="FontSize" Value="12"></Setter>
         <Setter Property="FocusVisualStyle" Value="{x:Null}"></Setter>
         <Setter Property="Foreground" Value="{DynamicResource MainBgColorForegroundBrush}"></Setter>
     </Style>
@@ -36,6 +45,7 @@
     <Style TargetType="Control" BasedOn="{StaticResource ControlBase}" />
     <Style TargetType="Button" BasedOn="{StaticResource ButtonBase}" />
     <Style TargetType="TextBox" BasedOn="{StaticResource TextBoxBase}" />
+    <Style TargetType="TextBlock" BasedOn="{StaticResource TextBlockBase}" />
     <Style TargetType="CheckBox" BasedOn="{StaticResource CheckBoxBase}" />
     <Style TargetType="RadioButton" BasedOn="{StaticResource RadioButtonBase}" />
     <Style TargetType="TextElement" BasedOn="{StaticResource TextElementBase}" />
@@ -45,6 +55,7 @@
     <Style TargetType="{x:Type controls:ButtonEx}" x:Key="ButtonExStyleBase">
         <Setter Property="Focusable" Value="False"/>
         <Setter Property="FocusVisualStyle" Value="{x:Null}"></Setter>
+        <Setter Property="FontSize" Value="12"></Setter>
         <Setter Property="Opacity" Value="1"></Setter>
         <Setter Property="Padding" Value="5"></Setter>
         <Setter Property="BorderBrush" Value="Gray"></Setter>
@@ -62,7 +73,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type Button}">
-                    <Grid>
+                    <Grid x:Name="Grid">
                         <Border 
                         x:Name="ButtonBorder"
                         Background="{TemplateBinding Background}" 
@@ -87,24 +98,21 @@
                             </MultiTrigger.Conditions>
                             <MultiTrigger.Setters>
                                 <Setter TargetName="ButtonBorder" Property="Background" Value="{Binding BackgroundOnMouseOver, RelativeSource={x:Static RelativeSource.TemplatedParent}}"/>
-                                <Setter TargetName="ButtonBorder" Property="Opacity" Value="{Binding OpacityOnMouseOver, RelativeSource={x:Static RelativeSource.TemplatedParent}}"/>
                                 <Setter TargetName="ButtonContentPresenter" Property="TextBlock.Foreground" Value="{Binding ForegroundOnMouseOver, RelativeSource={x:Static RelativeSource.TemplatedParent}}"/>
                             </MultiTrigger.Setters>
                         </MultiTrigger>
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
-                                <Condition Property="IsMouseOver" Value="True"></Condition>
                                 <Condition Property="IsPressed" Value="True"></Condition>
                             </MultiTrigger.Conditions>
                             <MultiTrigger.Setters>
                                 <Setter TargetName="ButtonBorder" Property="Background" Value="{Binding BackgroundOnPressed, RelativeSource={x:Static RelativeSource.TemplatedParent}}"/>
-                                <Setter TargetName="ButtonBorder" Property="Opacity" Value="{Binding OpacityOnPressed, RelativeSource={x:Static RelativeSource.TemplatedParent}}"/>
                                 <Setter TargetName="ButtonContentPresenter" Property="TextBlock.Foreground" Value="{Binding ForegroundOnPressed, RelativeSource={x:Static RelativeSource.TemplatedParent}}"/>
+                                <Setter TargetName="Grid" Property="Opacity" Value="{Binding OpacityOnPressed, RelativeSource={x:Static RelativeSource.TemplatedParent}}"/>
                             </MultiTrigger.Setters>
                         </MultiTrigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter TargetName="ButtonBorder" Property="Background" Value="{Binding BackgroundOnDisabled, RelativeSource={x:Static RelativeSource.TemplatedParent}}"/>
-                            <Setter TargetName="ButtonBorder" Property="Opacity" Value="{Binding OpacityOnDisabled, RelativeSource={x:Static RelativeSource.TemplatedParent}}"/>
                             <Setter TargetName="ButtonContentPresenter" Property="TextBlock.Foreground" Value="{Binding ForegroundOnDisabled, RelativeSource={x:Static RelativeSource.TemplatedParent}}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
@@ -118,19 +126,16 @@
                     <Condition Property="IsEnabled" Value="True"></Condition>
                 </MultiTrigger.Conditions>
                 <MultiTrigger.Setters>
+                    <Setter Property="Opacity" Value="{Binding OpacityOnMouseOver, RelativeSource={x:Static RelativeSource.Self}}"/>
                     <Setter Property="Foreground" Value="{Binding ForegroundOnMouseOver, RelativeSource={x:Static RelativeSource.Self}}"/>
                 </MultiTrigger.Setters>
             </MultiTrigger>
-            <MultiTrigger>
-                <MultiTrigger.Conditions>
-                    <Condition Property="IsMouseOver" Value="True"></Condition>
-                    <Condition Property="IsPressed" Value="True"></Condition>
-                </MultiTrigger.Conditions>
-                <MultiTrigger.Setters>
-                    <Setter Property="Foreground" Value="{Binding ForegroundOnPressed, RelativeSource={x:Static RelativeSource.Self}}"/>
-                </MultiTrigger.Setters>
-            </MultiTrigger>
+            <Trigger Property="IsPressed" Value="True">
+                <Setter Property="Opacity" Value="{Binding OpacityOnPressed, RelativeSource={x:Static RelativeSource.Self}}"/>
+                <Setter Property="Foreground" Value="{Binding ForegroundOnPressed, RelativeSource={x:Static RelativeSource.Self}}"/>
+            </Trigger>
             <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" Value="{Binding OpacityOnDisabled, RelativeSource={x:Static RelativeSource.Self}}"/>
                 <Setter Property="Foreground" Value="{Binding ForegroundOnDisabled, RelativeSource={x:Static RelativeSource.Self}}"/>
             </Trigger>
         </Style.Triggers>
@@ -175,7 +180,7 @@
                 <ColumnDefinition Width="20" />
             </Grid.ColumnDefinitions>
             <Border Grid.ColumnSpan="2" Name="Border"
-              BorderBrush="{StaticResource ComboBoxNormalBorderBrush}" 
+              BorderBrush="{StaticResource ComboBoxNormalBorderBrush}"  
               CornerRadius="0" BorderThickness="1, 1, 1, 1" 
               Background="{StaticResource ComboBoxNormalBackgroundBrush}" />
             <Border Grid.Column="1" Margin="1, 1, 1, 1" BorderBrush="#444" Name="ButtonBorder"
@@ -213,7 +218,6 @@
         <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
         <Setter Property="ScrollViewer.CanContentScroll" Value="True"/>
         <Setter Property="TextElement.Foreground" Value="{DynamicResource MainBgColorForegroundBrush}"/>
-        <Setter Property="FrameworkElement.FocusVisualStyle" Value="{x:Null}"/>
         <Setter Property="Control.Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ComboBox">
@@ -267,15 +271,13 @@
     </Style>
 
     <Style TargetType="{x:Type ComboBox}" x:Key="ComboBoxDefault">
-
-
     </Style>
 
 
 
 
 
-<Style x:Key="ServerEditorRow" TargetType="Grid">
+    <Style x:Key="EditorRowGrid" TargetType="Grid">
         <Setter Property="Height" Value="25"></Setter>
         <Setter Property="Margin">
             <Setter.Value>
@@ -283,7 +285,7 @@
             </Setter.Value>
         </Setter>
     </Style>
-    <Style x:Key="ServerEditorRowTitle" TargetType="TextBlock">
+    <Style x:Key="EditorRowGridTitle" TargetType="TextBlock" BasedOn="{StaticResource TextBlockBase}">
         <Setter Property="Foreground" Value="{DynamicResource MainBgColorForegroundBrush}"></Setter>
         <Setter Property="Width" Value="100"></Setter>
         <Setter Property="VerticalAlignment" Value="Center"></Setter>
@@ -296,11 +298,11 @@
         </Setter>
     </Style>
 
-    <Style x:Key="ServerEditorRowInput" TargetType="Grid">
+    <Style x:Key="EditorRowGridInput" TargetType="Grid">
         <Setter Property="Width" Value="350"></Setter>
     </Style>
 
-    <Style x:Key="ServerEditorGroupTitle" TargetType="TextBlock">
+    <Style x:Key="EditorGroupTextBlockTitle" TargetType="TextBlock">
         <Setter Property="Foreground" Value="{DynamicResource MainBgColorForegroundBrush}"></Setter>
         <Setter Property="FontSize" Value="16"></Setter>
         <Setter Property="FontWeight" Value="Bold"></Setter>
@@ -311,4 +313,120 @@
 
 
     <!-- End of Flat ComboBox -->
+
+
+
+    <Style x:Key="CheckBoxSwitchStyle" TargetType="{x:Type CheckBox}">
+        <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}" />
+        <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.WindowBrushKey}}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type CheckBox}">
+                    <ControlTemplate.Resources>
+                        <Storyboard x:Key="OnChecking">
+                            <DoubleAnimationUsingKeyFrames BeginTime="00:00:00" Storyboard.TargetName="slider" Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[3].(TranslateTransform.X)">
+                                <SplineDoubleKeyFrame KeyTime="00:00:00.1000000" Value="36" />
+                            </DoubleAnimationUsingKeyFrames>
+                        </Storyboard>
+                        <Storyboard x:Key="OnUnchecking">
+                            <DoubleAnimationUsingKeyFrames BeginTime="00:00:00" Storyboard.TargetName="slider" Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[3].(TranslateTransform.X)">
+                                <SplineDoubleKeyFrame KeyTime="00:00:00.1000000" Value="0" />
+                            </DoubleAnimationUsingKeyFrames>
+                        </Storyboard>
+                    </ControlTemplate.Resources>
+                    <DockPanel x:Name="dockPanel">
+                        <ContentPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" Content="{TemplateBinding Content}" ContentStringFormat="{TemplateBinding ContentStringFormat}" ContentTemplate="{TemplateBinding ContentTemplate}" RecognizesAccessKey="True" VerticalAlignment="Center" />
+                        <Grid>
+                            <Border BorderBrush="#FF939393" BorderThickness="1" CornerRadius="8" Height="{TemplateBinding Height}" Width="80">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                        <GradientStop Color="#38abcf" Offset="0" />
+                                        <GradientStop Color="#38abcf" Offset="0.5" />
+                                        <GradientStop Color="#d9d9d9" Offset="0.51" />
+                                        <GradientStop Color="#d9d9d9" Offset="1" />
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                    </Grid.ColumnDefinitions>
+                                    <Ellipse x:Name="Off" Width="14" Height="14" Stroke="#FF7A7A7A" StrokeThickness="2" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    <Line x:Name="On" X1="0" Y1="0" X2="0" Y2="14" Stroke="White" StrokeThickness="2" Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Grid>
+                            </Border>
+                            <Border BorderBrush="#FF939393" HorizontalAlignment="Left" x:Name="slider" 
+                                    Width="44" 
+                                    Height="{TemplateBinding Height}" 
+                                    BorderThickness="1" 
+                                    CornerRadius="8" RenderTransformOrigin="0.5,0.5" Margin="0">
+                                <Border.RenderTransform>
+                                    <TransformGroup>
+                                        <ScaleTransform ScaleX="1" ScaleY="1" />
+                                        <SkewTransform AngleX="0" AngleY="0" />
+                                        <RotateTransform Angle="0" />
+                                        <TranslateTransform X="0" Y="0" />
+                                    </TransformGroup>
+                                </Border.RenderTransform>
+                                <Border.Background>
+                                    <LinearGradientBrush EndPoint="0,1" StartPoint="0,0">
+                                        <GradientStop Color="#FFF0F0F0" Offset="0" />
+                                        <GradientStop Color="#FFCDCDCD" Offset="0.1" />
+                                        <GradientStop Color="#FFFBFBFB" Offset="1" />
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                            </Border>
+                        </Grid>
+                    </DockPanel>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Trigger.ExitActions>
+                                <BeginStoryboard Storyboard="{StaticResource OnUnchecking}" x:Name="OnUnchecking_BeginStoryboard" />
+                            </Trigger.ExitActions>
+                            <Trigger.EnterActions>
+                                <BeginStoryboard Storyboard="{StaticResource OnChecking}" x:Name="OnChecking_BeginStoryboard" />
+                            </Trigger.EnterActions>
+                            <!--<Setter TargetName="On" Property="Stroke" Value="White" />
+                            <Setter TargetName="Off" Property="Stroke" Value="White" />-->
+                            <!--<Setter TargetName="BackgroundBorder" Property="Background" Value="{DynamicResource MainColor2Brush}" />
+                            <Setter TargetName="BackgroundBorder" Property="BorderBrush" Value="{DynamicResource MainColor2DarkerBrush}" />-->
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.3" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="TextBoxWithPlaceHolder" TargetType="{x:Type TextBox}" BasedOn="{StaticResource {x:Type TextBox}}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type TextBox}">
+                    <Grid Background="{TemplateBinding Background}">
+                        <TextBox Text="{Binding Path=Text,
+                                                RelativeSource={RelativeSource TemplatedParent}, 
+                                                Mode=TwoWay,
+                                                UpdateSourceTrigger=PropertyChanged}"
+                                 x:Name="textSource" 
+                                 Background="Transparent" 
+                                 Panel.ZIndex="2" />
+                        <TextBlock Text="{TemplateBinding Tag}" Background="{TemplateBinding Background}" Panel.ZIndex="1" VerticalAlignment="Center" Margin="5 0 0 0">
+                            <TextBlock.Style>
+                                <Style TargetType="{x:Type TextBlock}">
+                                    <Setter Property="Foreground" Value="Transparent"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Path=Text, Source={x:Reference textSource}}" Value="">
+                                            <Setter Property="Foreground" Value="LightGray"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
 </ResourceDictionary>

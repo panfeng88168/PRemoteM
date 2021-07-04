@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using PRM.Core.Model;
 using RdpHelper;
+using Shawn.Utils;
 
 namespace PRM.Core.Protocol.RDP
 {
@@ -52,7 +53,7 @@ namespace PRM.Core.Protocol.RDP
         SmartCard = 1,
     }
 
-    public class ProtocolServerRDP : ProtocolServerWithAddrPortUserPwdBase
+    public sealed class ProtocolServerRDP : ProtocolServerWithAddrPortUserPwdBase
     {
         public class LocalSetting : NotifyPropertyChangedBase
         {
@@ -77,6 +78,13 @@ namespace PRM.Core.Protocol.RDP
             base.UserName = "Administrator";
         }
 
+
+        private bool _isAdministrativePurposes = false;
+        public bool IsAdministrativePurposes
+        {
+            get => _isAdministrativePurposes;
+            set => SetAndNotifyIfChanged(nameof(IsAdministrativePurposes), ref _isAdministrativePurposes, value);
+        }
 
         #region Display
 
@@ -262,9 +270,8 @@ namespace PRM.Core.Protocol.RDP
         #endregion
 
 
-
         #region Gateway
-        private EGatewayMode _gatewayMode = EGatewayMode.AutomaticallyDetectGatewayServerSettings;
+        private EGatewayMode _gatewayMode = EGatewayMode.DoNotUseGateway;
         public EGatewayMode GatewayMode
         {
             get => _gatewayMode;
@@ -327,6 +334,11 @@ namespace PRM.Core.Protocol.RDP
         }
 
 
+        public override bool IsOnlyOneInstance()
+        {
+            return true;
+        }
+
         public override ProtocolServerBase CreateFromJsonString(string jsonString)
         {
             try
@@ -335,8 +347,14 @@ namespace PRM.Core.Protocol.RDP
             }
             catch (Exception e)
             {
+                SimpleLogHelper.Debug(e);
                 return null;
             }
+        }
+
+        public override double GetListOrder()
+        {
+            return 0;
         }
 
         /// <summary>
@@ -385,7 +403,7 @@ namespace PRM.Core.Protocol.RDP
                     throw new ArgumentOutOfRangeException();
             }
 
-
+            
             rdpConfig.NetworkAutodetect = 0;
             switch (this.DisplayPerformance)
             {
@@ -433,7 +451,6 @@ namespace PRM.Core.Protocol.RDP
             rdpConfig.AudioMode = 2;
             rdpConfig.AudioCaptureMode = 0;
 
-            
             if (this.EnableDiskDrives)
                 rdpConfig.RedirectDrives = 1;
             if (this.EnableClipboard)
@@ -453,7 +470,21 @@ namespace PRM.Core.Protocol.RDP
 
             rdpConfig.AutoReconnectionEnabled = 1;
 
-
+            switch (GatewayMode)
+            {
+                case EGatewayMode.AutomaticallyDetectGatewayServerSettings:
+                    rdpConfig.GatewayUsageMethod = 2;
+                    break;
+                case EGatewayMode.UseTheseGatewayServerSettings:
+                    rdpConfig.GatewayUsageMethod = 1;
+                    break;
+                case EGatewayMode.DoNotUseGateway:
+                default:
+                    rdpConfig.GatewayUsageMethod = 0;
+                    throw new ArgumentOutOfRangeException();
+            }
+            rdpConfig.GatewayHostname = this.GatewayHostName;
+            rdpConfig.GatewayCredentialsSource = 4;
             return rdpConfig;
         }
     }

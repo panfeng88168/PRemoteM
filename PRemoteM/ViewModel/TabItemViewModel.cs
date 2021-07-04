@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Drawing;
-using System.Windows;
-using System.Windows.Media;
+using PRM.Core;
 using PRM.Core.Protocol;
-using Color = System.Drawing.Color;
 
-namespace PRM.Core.Ulits.DragablzTab
+namespace Shawn.Utils.DragablzTab
 {
     public class TabItemViewModel : NotifyPropertyChangedBase
     {
@@ -60,6 +57,7 @@ namespace PRM.Core.Ulits.DragablzTab
                 }
                 catch (Exception)
                 {
+                    MarkColorHex = "#FFFFFF";
                 }
             }
         }

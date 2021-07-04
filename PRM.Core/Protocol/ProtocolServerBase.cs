@@ -1,36 +1,29 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Drawing;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using ColorPickerWPF.Code;
 using Newtonsoft.Json;
-using PRM.Core.DB;
-using PRM.Core.Model;
-using Shawn.Ulits;
-using Brush = System.Drawing.Brush;
+using Shawn.Utils;
 using Color = System.Windows.Media.Color;
 
 namespace PRM.Core.Protocol
 {
     public abstract class ProtocolServerBase : NotifyPropertyChangedBase, ICloneable
     {
-        protected ProtocolServerBase(string protocol, string classVersion, string protocolDisplayName, bool onlyOneInstance = true)
+        protected ProtocolServerBase(string protocol, string classVersion, string protocolDisplayName, string protocolDisplayNameInShort = "")
         {
             Protocol = protocol;
             ClassVersion = classVersion;
             ProtocolDisplayName = protocolDisplayName;
-            OnlyOneInstance = onlyOneInstance;
+            if (string.IsNullOrWhiteSpace(protocolDisplayNameInShort))
+                ProtocolDisplayNameInShort = ProtocolDisplayName;
+            else
+                ProtocolDisplayNameInShort = protocolDisplayNameInShort;
         }
 
-        private bool _onlyOneInstance = true;
-        public bool OnlyOneInstance
-        {
-            get => _onlyOneInstance;
-            private set => SetAndNotifyIfChanged(nameof(OnlyOneInstance), ref _onlyOneInstance, value);
-        }
+        public abstract bool IsOnlyOneInstance();
 
 
         private uint _id = 0;
@@ -45,14 +38,23 @@ namespace PRM.Core.Protocol
 
         public string ClassVersion { get; }
 
+        [JsonIgnore]
         public string ProtocolDisplayName { get; }
+        [JsonIgnore]
+        public string ProtocolDisplayNameInShort { get; }
 
 
         private string _dispName = "";
         public string DispName
         {
             get => _dispName;
-            set => SetAndNotifyIfChanged(nameof(DispName), ref _dispName, value);
+            set
+            {
+                if (!string.IsNullOrEmpty(value))
+                {
+                    SetAndNotifyIfChanged(nameof(DispName), ref _dispName, value);
+                }
+            }
         }
 
         [JsonIgnore]
@@ -76,15 +78,18 @@ namespace PRM.Core.Protocol
                 SetAndNotifyIfChanged(nameof(IconBase64), ref _iconBase64, value);
                 try
                 {
-                    var bm = NetImageProcessHelper.BitmapFromBytes(Convert.FromBase64String(value));
-                    _iconImg = bm.ToBitmapSource();
-                    Icon = bm.ToIcon();
+                    if (!string.IsNullOrEmpty(value))
+                    {
+                        var bm = NetImageProcessHelper.BitmapFromBytes(Convert.FromBase64String(value));
+                        _iconImg = bm.ToBitmapSource();
+                        Icon = bm.ToIcon();
+                    }
                 }
                 catch (Exception e)
                 {
+                    SimpleLogHelper.Debug(e);
                     _iconImg = null;
                     Icon = null;
-                    //Console.WriteLine(e);
                 }
             }
         }
@@ -109,11 +114,15 @@ namespace PRM.Core.Protocol
                 SetAndNotifyIfChanged(nameof(IconImg), ref _iconImg, value);
                 try
                 {
-                    _iconBase64 = Convert.ToBase64String(value.ToBytes());
-                    Icon = value.ToIcon();
+                    if (value != null)
+                    {
+                        _iconBase64 = Convert.ToBase64String(value.ToBytes());
+                        Icon = value.ToIcon();
+                    }
                 }
                 catch (Exception e)
                 {
+                    SimpleLogHelper.Error(e);
                     _iconBase64 = null;
                     Icon = null;
                 }
@@ -153,12 +162,37 @@ namespace PRM.Core.Protocol
         }
 
         private DateTime _lastConnTime = DateTime.MinValue;
-        [JsonIgnore]
         public DateTime LastConnTime
         {
             get => _lastConnTime;
             set => SetAndNotifyIfChanged(nameof(LastConnTime), ref _lastConnTime, value);
         }
+
+
+        private string _commandBeforeConnected = "";
+        public string CommandBeforeConnected
+        {
+            get => _commandBeforeConnected;
+            set => SetAndNotifyIfChanged(nameof(CommandBeforeConnected), ref _commandBeforeConnected, value);
+        }
+
+
+        //private string _commandAfterConnected = "";
+        //public string CommandAfterConnected
+        //{
+        //    get => _commandAfterConnected;
+        //    set => SetAndNotifyIfChanged(nameof(CommandAfterConnected), ref _commandAfterConnected, value);
+        //}
+
+
+        //private string _commandAfterDisconnected = "";
+        //public string CommandAfterDisconnected
+        //{
+        //    get => _commandAfterDisconnected;
+        //    set => SetAndNotifyIfChanged(nameof(CommandAfterDisconnected), ref _commandAfterDisconnected, value);
+        //}
+
+
 
         /// <summary>
         /// copy all value type fields
@@ -238,15 +272,26 @@ namespace PRM.Core.Protocol
             return JsonConvert.SerializeObject(this, Formatting.Indented);
         }
 
-
+        /// <summary>
+        /// json string to instance
+        /// </summary>
+        /// <param name="jsonString"></param>
+        /// <returns></returns>
         public abstract ProtocolServerBase CreateFromJsonString(string jsonString);
 
 
-
-
+        /// <summary>
+        /// subtitle of every server, different form each protocol
+        /// </summary>
+        /// <returns></returns>
         protected abstract string GetSubTitle();
 
 
+        /// <summary>
+        /// determine the display order to show items
+        /// </summary>
+        /// <returns></returns>
+        public abstract double GetListOrder();
 
         /// <summary>
         /// cation: it is a shallow
@@ -254,6 +299,44 @@ namespace PRM.Core.Protocol
         public object Clone()
         {
             return MemberwiseClone();
+        }
+
+        public virtual bool EqualTo(ProtocolServerBase compare)
+        {
+            var t1 = this.GetType();
+            var t2 = compare.GetType();
+            if (t1 == t2)
+            {
+                var properties = t1.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+                foreach (var property in properties)
+                {
+                    if (property.CanWrite && property.SetMethod != null)
+                    {
+                        var v1 = property.GetValue(this)?.ToString();
+                        var v2 = property.GetValue(compare)?.ToString();
+                        if (v1 != v2)
+                            return false;
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
+
+        public void RunScriptBeforConnect()
+        {
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(CommandBeforeConnected))
+                {
+                    // TODO add some params
+                    Shawn.Utils.CmdRunner.RunCmdAsync(CommandBeforeConnected);
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
         }
     }
 }

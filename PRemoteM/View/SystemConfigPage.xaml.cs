@@ -1,21 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Forms;
 using System.Windows.Input;
-using PRM.Core.DB;
 using PRM.Core.Model;
 using PRM.ViewModel;
-using Shawn.Ulits;
-using SQLite;
+using Shawn.Utils;
 using Binding = System.Windows.Data.Binding;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 using MessageBox = System.Windows.MessageBox;
@@ -24,21 +16,18 @@ using UserControl = System.Windows.Controls.UserControl;
 
 namespace PRM.View
 {
-    /// <summary>
-    /// SystemConfigPage.xaml 的交互逻辑
-    /// </summary>
     public partial class SystemConfigPage : UserControl
     {
         public VmMain Host;
         public VmSystemConfigPage VmSystemConfigPage;
-        public SystemConfigPage(VmMain host,Type t = null)
+        public SystemConfigPage(VmMain host, Type t = null)
         {
             Host = host;
             VmSystemConfigPage = new VmSystemConfigPage(host);
             InitializeComponent();
             DataContext = VmSystemConfigPage;
 
-            
+
             if (t == typeof(SystemConfigGeneral))
                 TabItemGeneral.IsSelected = true;
             if (t == typeof(SystemConfigLanguage))
@@ -107,7 +96,7 @@ namespace PRM.View
             }
         }
 
-        private bool SetHotkeyIsRegistered(ModifierKeys modifier, Key key)
+        private bool SetHotkeyIsRegistered(HotkeyModifierKeys modifier, Key key)
         {
             if (modifier == SystemConfig.Instance.QuickConnect.HotKeyModifiers
                 && key == SystemConfig.Instance.QuickConnect.HotKeyKey)
@@ -119,7 +108,7 @@ namespace PRM.View
 
 
             // check if HOTKEY_ALREADY_REGISTERED
-            var r = GlobalHotkeyHooker.Instance.Regist(null, modifier, key, () => { });
+            var r = GlobalHotkeyHooker.Instance.Regist(null, (uint)modifier, key, () => { });
             switch (r.Item1)
             {
                 case GlobalHotkeyHooker.RetCode.Success:
@@ -128,10 +117,10 @@ namespace PRM.View
                     VmSystemConfigPage.SystemConfig.QuickConnect.HotKeyKey = key;
                     return true;
                 case GlobalHotkeyHooker.RetCode.ERROR_HOTKEY_NOT_REGISTERED:
-                    MessageBox.Show(SystemConfig.Instance.Language.GetText("info_hotkey_registered_fail") + ": " + r.Item2);
+                    MessageBox.Show(SystemConfig.Instance.Language.GetText("hotkey_registered_fail") + ": " + r.Item2, SystemConfig.Instance.Language.GetText("messagebox_title_error"), MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.None);
                     break;
                 case GlobalHotkeyHooker.RetCode.ERROR_HOTKEY_ALREADY_REGISTERED:
-                    MessageBox.Show(SystemConfig.Instance.Language.GetText("info_hotkey_already_registered") + ": " + r.Item2);
+                    MessageBox.Show(SystemConfig.Instance.Language.GetText("hotkey_already_registered") + ": " + r.Item2, SystemConfig.Instance.Language.GetText("messagebox_title_error"), MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.None);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
@@ -142,10 +131,41 @@ namespace PRM.View
             return false;
         }
 
-        private void Hyperlink_Click(object sender, RoutedEventArgs e)
+        private void ContentElement_OnMouseRightButtonDown(object sender, MouseButtonEventArgs e)
         {
-            var link = sender as Hyperlink;
-            Process.Start(new ProcessStartInfo(link.NavigateUri.AbsoluteUri));
+            var dlg = new OpenFileDialog();
+            dlg.Filter = "json|*.json";
+            dlg.Title = "Select a language json file for translation test.";
+            dlg.CheckFileExists = false;
+            if (dlg.ShowDialog() == true)
+            {
+                try
+                {
+                    var path = dlg.FileName;
+                    var fi = new FileInfo(path);
+                    if (fi.Exists)
+                    {
+                        var resourceDictionary = MultiLangHelper.LangDictFromJsonFile(fi.FullName);
+                        if (resourceDictionary != null)
+                        {
+                            if (resourceDictionary.Contains("language_name"))
+                            {
+                                var code = fi.Name.ReplaceLast(fi.Extension, "");
+                                SystemConfig.Instance.Language.AddOrUpdateLanguage(code, resourceDictionary["language_name"].ToString(), fi.FullName);
+                            }
+                            else
+                            {
+                                MessageBox.Show("json must contain field: \"language_name\"!", SystemConfig.Instance.Language.GetText("messagebox_title_error"), MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.None);
+                            }
+                        }
+                    }
+                }
+                catch (Exception ee)
+                {
+                    SimpleLogHelper.Warning(ee);
+                    MessageBox.Show(ee.Message, SystemConfig.Instance.Language.GetText("messagebox_title_error"), MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.None);
+                }
+            }
         }
     }
 
@@ -169,7 +189,6 @@ namespace PRM.View
     /// </summary>
     public class Key2KeyStringConverter : IValueConverter
     {
-        // 实现接口的两个方法  
         #region IValueConverter 成员  
         public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
         {
@@ -184,11 +203,10 @@ namespace PRM.View
         #endregion
     }
 
-    
+
 
     public class StringIsEmpty2BoolConverter : IValueConverter
     {
-        // 实现接口的两个方法  
         #region IValueConverter 成员  
         public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
         {

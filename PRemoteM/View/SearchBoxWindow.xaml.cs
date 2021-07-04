@@ -1,21 +1,14 @@
 ﻿using System;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Linq;
-using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using PRM.Core.Model;
 using PRM.ViewModel;
-using Shawn.Ulits;
+using Shawn.Utils;
 
 namespace PRM.View
 {
-    /// <summary>
-    /// SearchBoxWindow.xaml 的交互逻辑
-    /// </summary>
-    public partial class SearchBoxWindow : Window
+    public partial class SearchBoxWindow : WindowChromeBase
     {
         private readonly VmSearchBox _vmSearchBox = null;
 
@@ -24,7 +17,14 @@ namespace PRM.View
         {
             InitializeComponent();
             ShowInTaskbar = false;
-            _vmSearchBox = new VmSearchBox();
+
+
+            double gridMainWidth = (double)FindResource("GridMainWidth");
+            double oneItemHeight = (double)FindResource("OneItemHeight");
+            double oneActionItemHeight = (double)FindResource("OneActionItemHeight");
+            double cornerRadius = (double)FindResource("CornerRadius");
+            _vmSearchBox = new VmSearchBox(gridMainWidth, oneItemHeight, oneActionItemHeight, cornerRadius, GridSelections, GridMenuActions);
+
             DataContext = _vmSearchBox;
             Loaded += (sender, args) =>
             {
@@ -45,32 +45,71 @@ namespace PRM.View
                     SetHotKey();
                 }
             };
+
+            _vmSearchBox.PropertyChanged += (sender, args) =>
+            {
+                if (args.PropertyName == nameof(VmSearchBox.SelectedIndex))
+                {
+                    ListBoxSelections.ScrollIntoView(ListBoxSelections.SelectedItem);
+                }
+            };
         }
 
-        protected override void OnLocationChanged(EventArgs e)
-        {
-            // make popup control moves with parent by https://stackoverflow.com/questions/5736359/popup-control-moves-with-parent
-            PopupSelections.HorizontalOffset += 1;
-            PopupSelections.HorizontalOffset -= 1;
-            PopupActions.HorizontalOffset += 1;
-            PopupActions.HorizontalOffset -= 1;
-            base.OnLocationChanged(e);
-        }
-
-        private readonly object _closeLocker = new object();
+        private readonly object _hideToggleLocker = new object();
         private bool _isHidden = false;
         private void HideMe()
         {
             if (_isHidden == false)
-                lock (_closeLocker)
+                lock (_hideToggleLocker)
                 {
                     if (_isHidden == false)
                     {
                         this.Visibility = Visibility.Hidden;
-                        _vmSearchBox.PopupSelectionsIsOpen = false;
-                        _vmSearchBox.PopupActionsIsOpen = false;
                         _isHidden = true;
                         this.Hide();
+                        _vmSearchBox.HideActionsList();
+                        _vmSearchBox.Filter = "";
+                    }
+                }
+        }
+
+        private string _assignTabTokenThisTime = null;
+
+
+
+        public void ShowMe()
+        {
+            ShowMe(null);
+        }
+        public void ShowMe(string assignTabTokenThisTime)
+        {
+            _assignTabTokenThisTime = assignTabTokenThisTime;
+
+            if (!SystemConfig.Instance.QuickConnect.Enable)
+                return;
+
+            SimpleLogHelper.Debug("Call shortcut to invoke quick window.");
+            if (_isHidden == true)
+                lock (_hideToggleLocker)
+                {
+                    if (this.WindowState != WindowState.Normal)
+                        this.WindowState = WindowState.Normal;
+                    if (_isHidden == true)
+                    {
+                        _vmSearchBox.Filter = "";
+                        var p = ScreenInfoEx.GetMouseSystemPosition();
+                        var screenEx = ScreenInfoEx.GetCurrentScreenBySystemPosition(p);
+                        this.Top = screenEx.VirtualWorkingAreaCenter.Y - this.Height / 2;
+                        this.Left = screenEx.VirtualWorkingAreaCenter.X - this.Width / 2;
+                        _vmSearchBox.UpdateItemsList("");
+                        this.Show();
+                        this.Visibility = Visibility.Visible;
+                        this.Activate();
+                        this.Topmost = true;  // important
+                        this.Topmost = false; // important
+                        this.Focus();         // important
+                        TbKeyWord.Focus();
+                        _isHidden = false;
                     }
                 }
         }
@@ -78,48 +117,21 @@ namespace PRM.View
 
 
 
-        public void ShowMe()
+
+
+
+
+
+
+        protected override void WinTitleBar_OnPreviewMouseMove(object sender, MouseEventArgs e)
         {
-            SimpleLogHelper.Debug("Call shortcut to invoke quick window.");
-            _vmSearchBox.DispNameFilter = "";
-            if (SystemConfig.Instance.QuickConnect.Enable)
-                if (_isHidden == true)
-                    lock (_closeLocker)
-                    {
-                        if (_isHidden == true)
-                        {
-                            var p = ScreenInfoEx.GetMouseSystemPosition();
-                            var screenEx = ScreenInfoEx.GetCurrentScreenBySystemPosition(p);
-                            this.Top = screenEx.VirtualWorkingAreaCenter.Y - this.Height / 2;
-                            this.Left = screenEx.VirtualWorkingAreaCenter.X - this.Width / 2;
-                            this.Show();
-                            this.Visibility = Visibility.Visible;
-                            this.Activate();
-                            this.Topmost = true;  // important
-                            this.Topmost = false; // important
-                            this.Focus();         // important
-                            TbKeyWord.Focus();
-                            _isHidden = false;
-                            _vmSearchBox.PopupSelectionsIsOpen = false;
-                            _vmSearchBox.PopupActionsIsOpen = false;
-                        }
-                    }
-        }
-
-
-
-
-
-
-
-
-
-
-        private void WindowHeader_MouseMove(object sender, MouseEventArgs e)
-        {
-            if (e.LeftButton == MouseButtonState.Pressed)
+            if (e.LeftButton != MouseButtonState.Pressed) return;
+            try
             {
                 this.DragMove();
+            }
+            catch
+            {
             }
         }
 
@@ -131,90 +143,28 @@ namespace PRM.View
         {
             lock (_keyDownLocker)
             {
-                if (_vmSearchBox.Servers.Count == 0)
-                {
-                    _vmSearchBox.PopupSelectionsIsOpen = false;
-                    _vmSearchBox.PopupActionsIsOpen = false;
-                    return;
-                }
-
                 var key = e.Key;
+
                 if (key == Key.Escape)
                 {
                     HideMe();
                     return;
                 }
-                else if (_vmSearchBox.PopupSelectionsIsOpen)
+                else if (GridMenuActions.Visibility == Visibility.Visible)
                 {
                     switch (key)
                     {
                         case Key.Enter:
-                            HideMe();
-                            if (_vmSearchBox.SelectedServerIndex >= 0 && _vmSearchBox.SelectedServerIndex < _vmSearchBox.Servers.Count)
-                            {
-                                var s = _vmSearchBox.Servers[_vmSearchBox.SelectedServerIndex];
-                                GlobalEventHelper.OnServerConnect?.Invoke(s.Server.Id);
-                            }
-                            break;
-                        case Key.Down:
-                            if (_vmSearchBox.SelectedServerIndex < _vmSearchBox.Servers.Count - 1)
-                            {
-                                ++_vmSearchBox.SelectedServerIndex;
-                                ListBoxSelections.ScrollIntoView(ListBoxSelections.SelectedItem);
-                            }
-                            break;
-                        case Key.Up:
-                            if (_vmSearchBox.SelectedServerIndex > 0)
-                            {
-                                --_vmSearchBox.SelectedServerIndex;
-                                ListBoxSelections.ScrollIntoView(ListBoxSelections.SelectedItem);
-                            }
-                            break;
-                        case Key.PageUp:
-                            if (_vmSearchBox.SelectedServerIndex > 0)
-                            {
-                                _vmSearchBox.SelectedServerIndex =
-                                    _vmSearchBox.SelectedServerIndex - 5 < 0 ? 0 : _vmSearchBox.SelectedServerIndex - 5;
-                                ListBoxSelections.ScrollIntoView(ListBoxSelections.SelectedItem);
-                            }
-                            break;
-                        case Key.PageDown:
-                            if (_vmSearchBox.SelectedServerIndex < _vmSearchBox.Servers.Count - 1)
-                            {
-                                _vmSearchBox.SelectedServerIndex =
-                                    _vmSearchBox.SelectedServerIndex + 5 > _vmSearchBox.Servers.Count - 1
-                                        ? _vmSearchBox.Servers.Count - 1
-                                        : _vmSearchBox.SelectedServerIndex + 5;
-                                ListBoxSelections.ScrollIntoView(ListBoxSelections.SelectedItem);
-                            }
-                            break;
-                        case Key.Right:
-                            if (sender is TextBox tb)
-                            {
-                                if (tb.CaretIndex != tb.Text.Length)
-                                {
-                                    return;
-                                }
-                            }
-                            if (_vmSearchBox.SelectedServerIndex >= 0 && _vmSearchBox.SelectedServerIndex < _vmSearchBox.Servers.Count)
-                            {
-                                _vmSearchBox.ShowActionsList();
-                            }
-                            e.Handled = true;
-                            break;
-                    }
-                }
-                else if (_vmSearchBox.PopupActionsIsOpen)
-                {
-                    switch (key)
-                    {
-                        case Key.Enter:
-                            HideMe();
                             if (_vmSearchBox.Actions.Count > 0
                                 && _vmSearchBox.SelectedActionIndex >= 0
                                 && _vmSearchBox.SelectedActionIndex < _vmSearchBox.Actions.Count)
                             {
-                                _vmSearchBox.Actions[_vmSearchBox.SelectedActionIndex]?.Run();
+                                if(_vmSearchBox?.SelectedItem?.Server?.Id == null)
+                                    return;
+                                var id = _vmSearchBox.SelectedItem.Server.Id;
+                                var si = _vmSearchBox.SelectedActionIndex;
+                                HideMe();
+                                _vmSearchBox.Actions[si]?.Run(id);
                             }
                             break;
                         case Key.Down:
@@ -250,9 +200,99 @@ namespace PRM.View
                             }
                             break;
                         case Key.Left:
-                            _vmSearchBox.PopupSelectionsIsOpen = true;
-                            _vmSearchBox.PopupActionsIsOpen = false;
+                            _vmSearchBox.HideActionsList();
+                            break;
+                    }
+                    e.Handled = true;
+                }
+                else
+                {
+                    switch (key)
+                    {
+                        case Key.Right:
+                            if (sender is TextBox tb)
+                            {
+                                if (tb.CaretIndex != tb.Text.Length)
+                                {
+                                    return;
+                                }
+                            }
+
+                            if (_vmSearchBox.SelectedIndex >= 0 &&
+                                _vmSearchBox.SelectedIndex < GlobalData.Instance.VmItemList.Count)
+                            {
+                                _vmSearchBox.ShowActionsList();
+                            }
                             e.Handled = true;
+                            break;
+                        case Key.Enter:
+                            OpenSessionAndHide();
+                            break;
+                        case Key.Down:
+                            if (_vmSearchBox.SelectedIndex < GlobalData.Instance.VmItemList.Count - 1)
+                            {
+                                var index = _vmSearchBox.SelectedIndex;
+                                for (int i = _vmSearchBox.SelectedIndex + 1; i < GlobalData.Instance.VmItemList.Count; i++)
+                                {
+                                    if (GlobalData.Instance.VmItemList[i].ObjectVisibility == Visibility)
+                                    {
+                                        index = i;
+                                        break;
+                                    }
+                                }
+                                _vmSearchBox.SelectedIndex = index;
+                            }
+                            break;
+                        case Key.Up:
+                            if (_vmSearchBox.SelectedIndex > 0)
+                            {
+                                var index = _vmSearchBox.SelectedIndex;
+                                for (int i = _vmSearchBox.SelectedIndex - 1; i >= 0; i--)
+                                {
+                                    if (GlobalData.Instance.VmItemList[i].ObjectVisibility == Visibility)
+                                    {
+                                        index = i;
+                                        break;
+                                    }
+                                }
+                                _vmSearchBox.SelectedIndex = index;
+                            }
+                            break;
+                        case Key.PageUp:
+                            if (_vmSearchBox.SelectedIndex > 0)
+                            {
+                                var index = _vmSearchBox.SelectedIndex;
+                                int count = 0;
+                                for (int i = _vmSearchBox.SelectedIndex - 1; i >= 0; i--)
+                                {
+                                    if (GlobalData.Instance.VmItemList[i].ObjectVisibility == Visibility)
+                                    {
+                                        ++count;
+                                        index = i;
+                                        if (count == 5)
+                                            break;
+                                    }
+                                }
+                                _vmSearchBox.SelectedIndex = index;
+                            }
+                            break;
+                        case Key.PageDown:
+                            if (_vmSearchBox.SelectedIndex < GlobalData.Instance.VmItemList.Count - 1)
+                            {
+                                var index = _vmSearchBox.SelectedIndex;
+                                int count = 0;
+                                for (int i = _vmSearchBox.SelectedIndex + 1; i < GlobalData.Instance.VmItemList.Count; i++)
+                                {
+                                    if (GlobalData.Instance.VmItemList[i].ObjectVisibility == Visibility)
+                                    {
+                                        ++count;
+                                        index = i;
+                                        if (count == 5)
+                                            break;
+                                    }
+                                }
+                                _vmSearchBox.SelectedIndex = index;
+                            }
                             break;
                     }
                 }
@@ -266,7 +306,7 @@ namespace PRM.View
         public void SetHotKey()
         {
             GlobalHotkeyHooker.Instance.Unregist(this);
-            var r = GlobalHotkeyHooker.Instance.Regist(this, SystemConfig.Instance.QuickConnect.HotKeyModifiers, SystemConfig.Instance.QuickConnect.HotKeyKey, this.ShowMe);
+            var r = GlobalHotkeyHooker.Instance.Regist(this, (uint)SystemConfig.Instance.QuickConnect.HotKeyModifiers, SystemConfig.Instance.QuickConnect.HotKeyKey, this.ShowMe);
             var title = SystemConfig.Instance.Language.GetText("messagebox_title_warning");
             switch (r.Item1)
             {
@@ -274,20 +314,71 @@ namespace PRM.View
                     break;
                 case GlobalHotkeyHooker.RetCode.ERROR_HOTKEY_NOT_REGISTERED:
                     {
-                        var msg = $"{SystemConfig.Instance.Language.GetText("info_hotkey_registered_fail")}: {r.Item2}";
+                        var msg = $"{SystemConfig.Instance.Language.GetText("hotkey_registered_fail")}: {r.Item2}";
                         SimpleLogHelper.Warning(msg);
-                        MessageBox.Show(msg, title);
+                        MessageBox.Show(msg, title, MessageBoxButton.OK, MessageBoxImage.Warning, MessageBoxResult.None);
                         break;
                     }
                 case GlobalHotkeyHooker.RetCode.ERROR_HOTKEY_ALREADY_REGISTERED:
                     {
-                        var msg = $"{SystemConfig.Instance.Language.GetText("info_hotkey_already_registered")}: {r.Item2}";
+                        var msg = $"{SystemConfig.Instance.Language.GetText("hotkey_already_registered")}: {r.Item2}";
                         SimpleLogHelper.Warning(msg);
-                        MessageBox.Show(msg, title);
+                        MessageBox.Show(msg, title, MessageBoxButton.OK, MessageBoxImage.Warning, MessageBoxResult.None);
                         break;
                     }
                 default:
                     throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        private void ListBoxSelections_OnMouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ClickCount == 2)
+                OpenSessionAndHide();
+        }
+
+        private void OpenSessionAndHide()
+        {
+            var si = _vmSearchBox.SelectedIndex;
+            HideMe();
+            if (si >= 0 && si < GlobalData.Instance.VmItemList.Count)
+            {
+                var s = GlobalData.Instance.VmItemList[si];
+                GlobalEventHelper.OnRequireServerConnect?.Invoke(s.Server.Id, _assignTabTokenThisTime);
+            }
+        }
+
+        private void ListBoxSelections_OnMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (_vmSearchBox.SelectedIndex >= 0 &&
+                _vmSearchBox.SelectedIndex < GlobalData.Instance.VmItemList.Count)
+            {
+                _vmSearchBox.ShowActionsList();
+            }
+        }
+
+        private void ListBoxActions_OnMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            _vmSearchBox.HideActionsList();
+        }
+
+        private void ButtonActionBack_OnMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            _vmSearchBox.HideActionsList();
+        }
+
+        private void ListBoxActions_OnMouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (_vmSearchBox?.SelectedItem?.Server?.Id == null)
+                return;
+            var id = _vmSearchBox.SelectedItem.Server.Id;
+            var si = _vmSearchBox.SelectedActionIndex;
+            HideMe();
+            if (_vmSearchBox.Actions.Count > 0
+                && si >= 0
+                && si < _vmSearchBox.Actions.Count)
+            {
+                _vmSearchBox.Actions[si]?.Run(id);
             }
         }
     }

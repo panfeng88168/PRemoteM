@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using MSTSCLib;
 
-namespace Shawn.Ulits.RDP
+namespace Shawn.Utils.RDP
 {
     public static class AxMsRdpClient9NotSafeForScriptingExAdd
     {
@@ -16,9 +16,9 @@ namespace Shawn.Ulits.RDP
             {
                 ((IMsRdpExtendedSettings)axHost.GetOcx()).set_Property(propertyName, ref value);
             }
-            catch (Exception ex)
+            catch (Exception ee)
             {
-                SimpleLogHelper.Error(ex, ex.StackTrace);
+                SimpleLogHelper.Error(ee);
             }
         }
     }

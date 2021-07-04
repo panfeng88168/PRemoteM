@@ -5,7 +5,7 @@
                         xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
                         xmlns:putty="clr-namespace:PRM.Core.Protocol.Putty"
                         xmlns:protocol="clr-namespace:PRM.Core.Protocol"
-                        xmlns:ulits="clr-namespace:Shawn.Ulits"
+                        xmlns:utils="clr-namespace:Shawn.Utils"
                         xmlns:controls="clr-namespace:PRM.Core.Resources.Controls"
                         mc:Ignorable="d" 
                         d:DesignHeight="1450" d:DesignWidth="800">
@@ -13,23 +13,23 @@
         <StackPanel.Resources>
             <ResourceDictionary>
                 <ResourceDictionary.MergedDictionaries>
-                    <ResourceDictionary Source="pack://application:,,,/PRM.Core;component/Ulits/PasswordEx/PasswordBoxEx.xaml"></ResourceDictionary>
+                    <ResourceDictionary Source="pack://application:,,,/PRM.Core;component/Utils/PasswordEx/PasswordBoxEx.xaml"></ResourceDictionary>
                 </ResourceDictionary.MergedDictionaries>
             </ResourceDictionary>
         </StackPanel.Resources>
 
         <StackPanel>
 
-            <TextBlock Style="{StaticResource ServerEditorGroupTitle}" Text="{DynamicResource server_editor_group_title_connection}"></TextBlock>
+            <TextBlock Style="{StaticResource EditorGroupTextBlockTitle}" Text="{DynamicResource server_editor_group_title_connection}"></TextBlock>
 
-            <Grid Style="{StaticResource ServerEditorRow}">
+            <Grid Style="{StaticResource EditorRowGrid}">
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Style="{StaticResource ServerEditorRowTitle}" Text="{DynamicResource server_editor_connection_address}"></TextBlock>
-                    <Grid Style="{StaticResource ServerEditorRowInput}">
+                    <TextBlock Style="{StaticResource EditorRowGridTitle}" Text="{DynamicResource server_editor_connection_address}"></TextBlock>
+                    <Grid Style="{StaticResource EditorRowGridInput}">
                         <TextBox Text="{Binding Address,UpdateSourceTrigger=PropertyChanged}"></TextBox>
                     </Grid>
-                    <TextBlock Style="{StaticResource ServerEditorRowTitle}" Width="60" Text="{DynamicResource server_editor_connection_port}"></TextBlock>
-                    <Grid Style="{StaticResource ServerEditorRowInput}">
+                    <TextBlock Style="{StaticResource EditorRowGridTitle}" Width="60" Text="{DynamicResource server_editor_connection_port}"></TextBlock>
+                    <Grid Style="{StaticResource EditorRowGridInput}">
                         <TextBox Text="{Binding Port,UpdateSourceTrigger=PropertyChanged,ValidatesOnExceptions=True,NotifyOnValidationError=True}" 
                                  Width="50" HorizontalAlignment="Left"
                                  InputMethod.IsInputMethodEnabled="False"
@@ -39,10 +39,10 @@
                 </StackPanel>
             </Grid>
 
-            <Grid Style="{StaticResource ServerEditorRow}" Name="GridUserName">
+            <Grid Style="{StaticResource EditorRowGrid}" Name="GridUserName">
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Style="{StaticResource ServerEditorRowTitle}" Text="{DynamicResource server_editor_connection_username}"></TextBlock>
-                    <Grid Style="{StaticResource ServerEditorRowInput}">
+                    <TextBlock Style="{StaticResource EditorRowGridTitle}" Text="{DynamicResource server_editor_connection_username}"></TextBlock>
+                    <Grid Style="{StaticResource EditorRowGridInput}">
                         <TextBox Text="{Binding UserName,UpdateSourceTrigger=PropertyChanged}"></TextBox>
                     </Grid>
                 </StackPanel>
@@ -50,7 +50,7 @@
 
             <Grid Name="GridPwd">
                 <Grid.Style>
-                    <Style TargetType="Grid" BasedOn="{StaticResource ServerEditorRow}">
+                    <Style TargetType="Grid" BasedOn="{StaticResource EditorRowGrid}">
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding ElementName=CbUsePrivateKey,Path= IsChecked}" Value="True">
                                 <Setter Property="Visibility" Value="Collapsed"></Setter>
@@ -60,9 +60,9 @@
                     </Style>
                 </Grid.Style>
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Style="{StaticResource ServerEditorRowTitle}" Text="{DynamicResource server_editor_connection_password}"></TextBlock>
-                    <Grid Style="{StaticResource ServerEditorRowInput}">
-                        <PasswordBox ulits:PasswordBoxEx.Password="{Binding Password,UpdateSourceTrigger=PropertyChanged,Mode=TwoWay}"
+                    <TextBlock Style="{StaticResource EditorRowGridTitle}" Text="{DynamicResource server_editor_connection_password}"></TextBlock>
+                    <Grid Style="{StaticResource EditorRowGridInput}">
+                        <PasswordBox utils:PasswordBoxEx.Password="{Binding Password,UpdateSourceTrigger=PropertyChanged,Mode=TwoWay}"
                                      Style="{StaticResource PasswordBoxEx}"/>
                     </Grid>
                 </StackPanel>
@@ -71,7 +71,7 @@
 
             <Grid Name="GridPrivateKey" Height="Auto">
                 <Grid.Style>
-                    <Style TargetType="Grid" BasedOn="{StaticResource ServerEditorRow}">
+                    <Style TargetType="Grid" BasedOn="{StaticResource EditorRowGrid}">
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding ElementName=CbUsePrivateKey,Path= IsChecked}" Value="True">
                                 <Setter Property="Margin" Value="0"></Setter>
@@ -80,7 +80,7 @@
                     </Style>
                 </Grid.Style>
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Style="{StaticResource ServerEditorRowTitle}" Text="{DynamicResource server_editor_connection_private_key}"></TextBlock>
+                    <TextBlock Style="{StaticResource EditorRowGridTitle}" Text="{DynamicResource server_editor_connection_private_key}"></TextBlock>
                     <StackPanel>
                         <CheckBox Name="CbUsePrivateKey" Content="{DynamicResource server_editor_connection_private_key_checker}" 
                                   Unchecked="CbUsePrivateKey_OnChecked"></CheckBox>
@@ -93,7 +93,7 @@
 
             <Grid>
                 <Grid.Style>
-                    <Style TargetType="Grid" BasedOn="{StaticResource ServerEditorRow}">
+                    <Style TargetType="Grid" BasedOn="{StaticResource EditorRowGrid}">
                         <Setter Property="Visibility" Value="Collapsed"></Setter>
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding ElementName=CbUsePrivateKey,Path= IsChecked}" Value="True">
@@ -103,11 +103,11 @@
                     </Style>
                 </Grid.Style>
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Style="{StaticResource ServerEditorRowTitle}" Text=""></TextBlock>
-                    <Grid Style="{StaticResource ServerEditorRowInput}" Width="500">
+                    <TextBlock Style="{StaticResource EditorRowGridTitle}" Text=""></TextBlock>
+                    <Grid Style="{StaticResource EditorRowGridInput}" Width="500">
                         <StackPanel Orientation="Horizontal">
                             <TextBox Name="TbPrivateKey" Text="{Binding PrivateKey}" Width="300"></TextBox>
-                            <controls:ButtonEx Content="{DynamicResource button_select}" Click="ButtonOpenPrivateKey_OnClick">
+                            <controls:ButtonEx Content="{DynamicResource word_select}" Click="ButtonOpenPrivateKey_OnClick">
                                 <controls:ButtonEx.Style>
                                     <Style TargetType="{x:Type controls:ButtonEx}" BasedOn="{StaticResource ButtonExStyleBase}">
                                         <Setter Property="Height" Value="{Binding ElementName=TbPrivateKey, Path=Height}"></Setter>
@@ -123,12 +123,12 @@
         </StackPanel>
 
 
-        <StackPanel Name="SpSsh">
-            <TextBlock Style="{StaticResource ServerEditorGroupTitle}" Text="{DynamicResource server_editor_group_title_advantage}"></TextBlock>
-            <Grid Style="{StaticResource ServerEditorRow}">
+        <StackPanel>
+            <TextBlock Style="{StaticResource EditorGroupTextBlockTitle}" Text="{DynamicResource server_editor_group_title_advantage}"></TextBlock>
+            <Grid Style="{StaticResource EditorRowGrid}">
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Style="{StaticResource ServerEditorRowTitle}" Text="{DynamicResource server_editor_advantage_ssh_version}"></TextBlock>
-                    <Grid Style="{StaticResource ServerEditorRowInput}">
+                    <TextBlock Style="{StaticResource EditorRowGridTitle}" Text="{DynamicResource server_editor_advantage_ssh_version}"></TextBlock>
+                    <Grid Style="{StaticResource EditorRowGridInput}">
                         <Grid.Resources>
                             <putty:ConverterESshVersion x:Key="ConverterESshVersion"/>
                         </Grid.Resources>
@@ -136,6 +136,14 @@
                             <ComboBoxItem Content="V1"/>
                             <ComboBoxItem Content="V2"/>
                         </ComboBox>
+                    </Grid>
+                </StackPanel>
+            </Grid>
+            <Grid Style="{StaticResource EditorRowGrid}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Style="{StaticResource EditorRowGridTitle}" Text="{DynamicResource server_editor_advantage_ssh_startup_auto_command}"></TextBlock>
+                    <Grid Style="{StaticResource EditorRowGridInput}">
+                        <TextBox Text="{Binding StartupAutoCommand,UpdateSourceTrigger=PropertyChanged}"></TextBox>
                     </Grid>
                 </StackPanel>
             </Grid>

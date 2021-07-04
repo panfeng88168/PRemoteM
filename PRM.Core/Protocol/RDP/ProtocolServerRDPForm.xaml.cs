@@ -12,26 +12,14 @@ using PRM.Core.Model;
 
 namespace PRM.Core.Protocol.RDP
 {
-    /// <summary>
-    /// ServerRDPEditForm.xaml 的交互逻辑
-    /// </summary>
     public partial class ProtocolServerRDPForm : ProtocolServerFormBase
     {
         public ProtocolServerRDP Vm;
-        public ProtocolServerRDPForm(ProtocolServerBase vm)
+        public ProtocolServerRDPForm(ProtocolServerBase vm) : base(vm)
         {
             InitializeComponent();
             Vm = (ProtocolServerRDP)vm;
             DataContext = vm;
-        }
-
-        public override bool CanSave()
-        {
-            if (!string.IsNullOrEmpty(Vm.Address?.Trim())
-                && !string.IsNullOrEmpty(Vm.UserName?.Trim())
-                && Vm.GetPort() > 0 && Vm.GetPort() < 65536)
-                return true;
-            return false;
         }
     }
 

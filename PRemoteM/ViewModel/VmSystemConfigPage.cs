@@ -1,23 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Security;
-using System.Security.AccessControl;
-using System.Security.Permissions;
-using System.Security.Principal;
-using System.Text;
+﻿using System.IO;
 using System.Windows;
-using Microsoft.Win32;
-using Newtonsoft.Json;
-using PRM.Core.DB;
 using PRM.Core.Model;
-using PRM.Core.Protocol;
-using PRM.Core.Protocol.Putty;
-using PRM.Core.Protocol.Putty.SSH;
-using PRM.Core.Protocol.RDP;
-using Shawn.Ulits;
-using SQLite;
+using Shawn.Utils;
 using NotifyPropertyChangedBase = PRM.Core.NotifyPropertyChangedBase;
 
 namespace PRM.ViewModel
@@ -57,12 +41,7 @@ namespace PRM.ViewModel
                         var c1 = SystemConfig.DataSecurity.CheckIfDbIsOk();
                         if (!c1.Item1)
                         {
-                            MessageBox.Show(c1.Item2, SystemConfig.Language.GetText("messagebox_title_error"));
-                            //MessageBox.Show(
-                            //    SystemConfig.Language
-                            //        .GetText("system_options_data_security_error_can_not_open") + ": " +
-                            //    SystemConfig.DataSecurity.DbPath,
-                            //    SystemConfig.Language.GetText("messagebox_title_error"));
+                            MessageBox.Show(c1.Item2, SystemConfig.Language.GetText("messagebox_title_error"), MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.None);
                             return;
                         }
 
@@ -70,12 +49,7 @@ namespace PRM.ViewModel
                         Host.DispPage = null;
 
                         /***                update config                ***/
-                        SystemConfig.Language.Save();
-                        SystemConfig.General.Save();
-                        SystemConfig.QuickConnect.Save();
-                        SystemConfig.DataSecurity.Save();
-                        SystemConfig.Theme.Save();
-                        SystemConfig.Theme.ReloadPuttyThemes();
+                        SystemConfig.Save();
                     });
                 }
                 return _cmdSaveAndGoBack;

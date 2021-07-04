@@ -1,23 +1,20 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-using Newtonsoft.Json;
-using PRM.Core.Ulits;
-using Shawn.Ulits;
+using Shawn.Utils;
 
 namespace PRM.Core.Model
 {
     public enum EnumServerOrderBy
     {
-        Name,
-        AddTimeAsc,
-        AddTimeDesc,
-        Protocol,
+        IdAsc = -1,
+        Protocol = 0,
+        ProtocolDesc = 1,
+        Name = 2,
+        NameDesc = 3,
+        GroupName = 4,
+        GroupNameDesc = 5,
+        Address = 6,
+        AddressDesc = 7,
     }
     public enum EnumTabMode
     {
@@ -25,6 +22,8 @@ namespace PRM.Core.Model
         NewItemGoesToGroup,
         NewItemGoesToProtocol,
     }
+
+
     public sealed class SystemConfigGeneral : SystemConfigBase
     {
         public SystemConfigGeneral(Ini ini) : base(ini)
@@ -33,31 +32,22 @@ namespace PRM.Core.Model
             var appDateFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), SystemConfig.AppName);
             if (!Directory.Exists(appDateFolder))
                 Directory.CreateDirectory(appDateFolder);
+            StopAutoSave = true;
             IconFolderPath = Path.Combine(appDateFolder, "icons");
             if (!Directory.Exists(IconFolderPath))
                 Directory.CreateDirectory(IconFolderPath);
             LogFilePath = Path.Combine(appDateFolder, SystemConfig.AppName + ".log.md");
+            StopAutoSave = false;
         }
 
-        private bool _appStartAutomatically = false;
+        private bool _appStartAutomatically = true;
         public bool AppStartAutomatically
         {
             get => _appStartAutomatically;
-            set
-            {
-                SetAndNotifyIfChanged(nameof(AppStartAutomatically), ref _appStartAutomatically, value);
-                if (value == true)
-                {
-                    SetSelfStartingHelper.SetSelfStart();
-                }
-                else
-                {
-                    SetSelfStartingHelper.UnsetSelfStart();
-                }
-            }
+            set => SetAndNotifyIfChanged(nameof(AppStartAutomatically), ref _appStartAutomatically, value);
         }
 
-        private bool _appStartMinimized = false;
+        private bool _appStartMinimized = true;
         public bool AppStartMinimized
         {
             get => _appStartMinimized;
@@ -79,6 +69,10 @@ namespace PRM.Core.Model
             {
                 SetAndNotifyIfChanged(nameof(LogFilePath), ref _logFilePath, value);
                 SimpleLogHelper.LogFileName = value;
+                SimpleLogHelper.DebugFileName = value;
+                SimpleLogHelper.WarningFileName = value;
+                SimpleLogHelper.ErrorFileName = value;
+                SimpleLogHelper.FatalFileName = value;
             }
         }
 
@@ -88,7 +82,7 @@ namespace PRM.Core.Model
             get => _serverOrderBy;
             set => SetAndNotifyIfChanged(nameof(ServerOrderBy), ref _serverOrderBy, value);
         }
-        
+
 
         private EnumTabMode _tabMode = EnumTabMode.NewItemGoesToLatestActivate;
         public EnumTabMode TabMode
@@ -107,6 +101,16 @@ namespace PRM.Core.Model
             _ini.WriteValue(nameof(AppStartMinimized).ToLower(), _sectionName, AppStartMinimized.ToString());
             _ini.WriteValue(nameof(ServerOrderBy).ToLower(), _sectionName, ServerOrderBy.ToString());
             _ini.WriteValue(nameof(TabMode).ToLower(), _sectionName, TabMode.ToString());
+
+            // TODO delete after 2021.04;
+            SetSelfStartingHelper.SetSelfStartByShortcut(false);
+
+#if FOR_MICROSOFT_STORE_ONLY
+            SetSelfStartingHelper.SetSelfStartByStartupTask(AppStartAutomatically);
+#else
+            SetSelfStartingHelper.SetSelfStartByRegistryKey(AppStartAutomatically);
+#endif
+
             StopAutoSave = false;
             _ini.Save();
         }

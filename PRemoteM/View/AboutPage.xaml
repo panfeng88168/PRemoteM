@@ -6,6 +6,7 @@
              xmlns:system="clr-namespace:System;assembly=mscorlib"
              xmlns:model="clr-namespace:PRM.Core.Model;assembly=PRM.Core"
              xmlns:controls="clr-namespace:PRM.Core.Resources.Controls;assembly=PRM.Core"
+             xmlns:utils="clr-namespace:Shawn.Utils;assembly=PRM.Core"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
     <UserControl.Resources>
@@ -14,7 +15,7 @@
     <Grid Background="{DynamicResource MainColor1Brush}">
         <Grid.Resources>
             <system:Double x:Key="BottomHeight">30</system:Double>
-            <Style x:Key="ServerEditorRow" TargetType="Grid">
+            <Style x:Key="EditorRowGrid" TargetType="Grid">
                 <Setter Property="Height" Value="20"></Setter>
                 <Setter Property="Margin">
                     <Setter.Value>
@@ -22,13 +23,13 @@
                     </Setter.Value>
                 </Setter>
             </Style>
-            <Style TargetType="TextBlock">
+            <Style TargetType="TextBlock" BasedOn="{StaticResource TextBlockBase}">
                 <Setter Property="Foreground" Value="{DynamicResource MainColor1ForegroundBrush}"></Setter>
                 <Setter Property="VerticalAlignment" Value="Center"></Setter>
                 <Setter Property="Opacity" Value="0.9"></Setter>
                 <Setter Property="Margin" Value="0 0 20 0"></Setter>
             </Style>
-            <Style x:Key="ServerEditorGroupTitle" TargetType="TextBlock">
+            <Style x:Key="EditorGroupTextBlockTitle" TargetType="TextBlock" BasedOn="{StaticResource TextBlockBase}">
                 <Setter Property="FontSize" Value="16"></Setter>
                 <Setter Property="FontWeight" Value="Bold"></Setter>
                 <Setter Property="Foreground" Value="{DynamicResource MainColor2Brush}"></Setter>
@@ -76,11 +77,11 @@
                         <Image Source="pack://application:,,,/PRM.Core;component/Resources/Logo/logo256.png" Width="160" HorizontalAlignment="Left"></Image>
                         <StackPanel Orientation="Vertical">
                             <StackPanel>
-                                <TextBlock Style="{StaticResource ServerEditorGroupTitle}" Text="{x:Static model:SystemConfig.AppName}" Margin="0 10 0 0"></TextBlock>
-                                <Grid Style="{StaticResource ServerEditorRow}">
+                                <TextBlock Style="{StaticResource EditorGroupTextBlockTitle}" Text="{x:Static model:SystemConfig.AppName}" Margin="0 10 0 0"></TextBlock>
+                                <Grid Style="{StaticResource EditorRowGrid}">
                                     <TextBlock Text="Your personal remote manager!"></TextBlock>
                                 </Grid>
-                                <Grid Style="{StaticResource ServerEditorRow}">
+                                <Grid Style="{StaticResource EditorRowGrid}">
                                     <StackPanel Orientation="Horizontal">
                                         <Grid>
                                             <TextBlock Text="Version"></TextBlock>
@@ -92,7 +93,7 @@
                                 </Grid>
                                 <Grid>
                                     <Grid.Style>
-                                        <Style TargetType="Grid" BasedOn="{StaticResource ServerEditorRow}">
+                                        <Style TargetType="Grid" BasedOn="{StaticResource EditorRowGrid}">
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding ElementName=TbNewVersion,Path=Text}" Value="">
                                                     <Setter Property="Visibility" Value="Collapsed"></Setter>
@@ -103,7 +104,7 @@
                                     <Border BorderThickness="0 0 0 1" BorderBrush="{DynamicResource MainColor2Brush}"></Border>
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock>
-                                            <Hyperlink NavigateUri="{Binding Source={x:Static model:SystemConfig.Instance}, Path=NewVersionUrl}" TextDecorations="{x:Null}" Click="Hyperlink_Click">
+                                            <Hyperlink NavigateUri="{Binding Source={x:Static model:SystemConfig.Instance}, Path=NewVersionUrl}" TextDecorations="{x:Null}" utils:HyperlinkHelper.IsOpenExternal="True">
                                                 <Grid>
                                                 <TextBlock Text="Update" Foreground="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType=Hyperlink}, Path=Foreground}"/>
                                                 </Grid>
@@ -124,19 +125,19 @@
                             </StackPanel>
                         </StackPanel>
                         <StackPanel Orientation="Vertical">
-                            <TextBlock Style="{StaticResource ServerEditorGroupTitle}" Text="Author"></TextBlock>
+                            <TextBlock Style="{StaticResource EditorGroupTextBlockTitle}" Text="Author"></TextBlock>
                             <StackPanel Orientation="Horizontal">
                                 <Grid Width="32" Height="32">
                                     <Image Source="pack://application:,,,/PRM.Core;component/Resources/Logo/author_avatar.jpg" Width="32"></Image>
                                 </Grid>
                                 <StackPanel Orientation="Vertical" Margin="10 0 0 0" VerticalAlignment="Center">
                                     <TextBlock>
-                                        <Hyperlink NavigateUri="https://github.com/VShawn" TextDecorations="{x:Null}" Click="Hyperlink_Click" >
+                                        <Hyperlink NavigateUri="https://github.com/VShawn" TextDecorations="{x:Null}" utils:HyperlinkHelper.IsOpenExternal="True" >
                                             Shawn
                                         </Hyperlink>
                                     </TextBlock>
                                     <TextBlock>
-                                        <Hyperlink NavigateUri="mailto::singlex@foxmail.com?subject=PRemoteM" TextDecorations="{x:Null}" Click="Hyperlink_Click" >
+                                        <Hyperlink NavigateUri="mailto::singlex@foxmail.com?subject=PRemoteM" TextDecorations="{x:Null}" utils:HyperlinkHelper.IsOpenExternal="True" >
                                             (singlex@foxmail.com)
                                         </Hyperlink>
                                     </TextBlock>
@@ -147,12 +148,12 @@
                     <Grid Grid.Column="1">
                         <StackPanel Orientation="Vertical" Margin="20 0 0 0">
                             <StackPanel Orientation="Vertical">
-                                <TextBlock Style="{StaticResource ServerEditorGroupTitle}" Text="Support"></TextBlock>
+                                <TextBlock Style="{StaticResource EditorGroupTextBlockTitle}" Text="Support" MouseRightButtonDown="SupportText_OnMouseRightButtonDown"></TextBlock>
                                 <StackPanel>
-                                    <Grid Style="{StaticResource ServerEditorRow}">
+                                    <Grid Style="{StaticResource EditorRowGrid}">
                                         <StackPanel Orientation="Horizontal">
                                             <TextBlock>
-                                                <Hyperlink NavigateUri="https://github.com/VShawn/PRemoteM" TextDecorations="{x:Null}" Click="Hyperlink_Click" >
+                                                <Hyperlink NavigateUri="https://github.com/VShawn/PRemoteM" TextDecorations="{x:Null}" utils:HyperlinkHelper.IsOpenExternal="True" >
                                                     How to use
                                                 </Hyperlink>
                                             </TextBlock>
@@ -161,17 +162,17 @@
                                 </StackPanel>
                             </StackPanel>
                             <StackPanel Orientation="Vertical">
-                                <TextBlock Style="{StaticResource ServerEditorGroupTitle}" Text="Make contributions"></TextBlock>
+                                <TextBlock Style="{StaticResource EditorGroupTextBlockTitle}" Text="Make contributions"></TextBlock>
                                 <StackPanel>
-                                    <Grid Style="{StaticResource ServerEditorRow}">
+                                    <Grid Style="{StaticResource EditorRowGrid}">
                                         <StackPanel Orientation="Horizontal">
                                             <TextBlock>
-                                                <Hyperlink NavigateUri="https://github.com/VShawn/PRemoteM/issues" TextDecorations="{x:Null}" Click="Hyperlink_Click" >
+                                                <Hyperlink NavigateUri="https://github.com/VShawn/PRemoteM/issues" TextDecorations="{x:Null}" utils:HyperlinkHelper.IsOpenExternal="True" >
                                                     Bug report
                                                 </Hyperlink>
                                             </TextBlock>
                                             <TextBlock>
-                                                <Hyperlink NavigateUri="https://github.com/VShawn/PRemoteM" TextDecorations="{x:Null}" Click="Hyperlink_Click" >
+                                                <Hyperlink NavigateUri="https://github.com/VShawn/PRemoteM" TextDecorations="{x:Null}" utils:HyperlinkHelper.IsOpenExternal="True" >
                                                     Github
                                                 </Hyperlink>
                                             </TextBlock>
@@ -180,41 +181,56 @@
                                 </StackPanel>
                             </StackPanel>
                             <StackPanel Orientation="Vertical">
-                                <TextBlock Style="{StaticResource ServerEditorGroupTitle}" Text="Included Components"></TextBlock>
+                                <TextBlock Style="{StaticResource EditorGroupTextBlockTitle}" Text="Included Components"></TextBlock>
                                 <StackPanel>
                                     <TextBlock>
-                                        <Hyperlink NavigateUri="https://www.chiark.greenend.org.uk/~sgtatham/putty/" TextDecorations="{x:Null}" Click="Hyperlink_Click" >
+                                        <Hyperlink NavigateUri="https://www.chiark.greenend.org.uk/~sgtatham/putty/" TextDecorations="{x:Null}" utils:HyperlinkHelper.IsOpenExternal="True" >
                                             https://www.chiark.greenend.org.uk/~sgtatham/putty/
                                         </Hyperlink>
                                     </TextBlock>
                                     <TextBlock>
-                                        <Hyperlink NavigateUri="https://github.com/ButchersBoy/Dragablz" TextDecorations="{x:Null}" Click="Hyperlink_Click" >
+                                        <Hyperlink NavigateUri="https://github.com/cyd01/KiTTY" TextDecorations="{x:Null}" utils:HyperlinkHelper.IsOpenExternal="True" >
+                                            https://github.com/cyd01/KiTTY
+                                        </Hyperlink>
+                                    </TextBlock>
+                                    <TextBlock>
+                                        <Hyperlink NavigateUri="https://github.com/ButchersBoy/Dragablz" TextDecorations="{x:Null}" utils:HyperlinkHelper.IsOpenExternal="True" >
                                             https://github.com/ButchersBoy/Dragablz
                                         </Hyperlink>
                                     </TextBlock>
                                     <TextBlock>
-                                        <Hyperlink NavigateUri="https://github.com/drogoganor/ColorPickerWPF" TextDecorations="{x:Null}" Click="Hyperlink_Click" >
+                                        <Hyperlink NavigateUri="https://github.com/drogoganor/ColorPickerWPF" TextDecorations="{x:Null}" utils:HyperlinkHelper.IsOpenExternal="True" >
                                             https://github.com/drogoganor/ColorPickerWPF
                                         </Hyperlink>
                                     </TextBlock>
                                     <TextBlock>
-                                        <Hyperlink NavigateUri="https://github.com/hstarorg/TinyPinyin.Net" TextDecorations="{x:Null}" Click="Hyperlink_Click" >
+                                        <Hyperlink NavigateUri="https://github.com/hstarorg/TinyPinyin.Net" TextDecorations="{x:Null}" utils:HyperlinkHelper.IsOpenExternal="True" >
                                             https://github.com/hstarorg/TinyPinyin.Net
                                         </Hyperlink>
                                     </TextBlock>
                                     <TextBlock>
-                                        <Hyperlink NavigateUri="https://github.com/praeclarum/sqlite-net" TextDecorations="{x:Null}" Click="Hyperlink_Click" >
+                                        <Hyperlink NavigateUri="https://github.com/praeclarum/sqlite-net" TextDecorations="{x:Null}" utils:HyperlinkHelper.IsOpenExternal="True" >
                                             https://github.com/praeclarum/sqlite-net
                                         </Hyperlink>
                                     </TextBlock>
                                     <TextBlock>
-                                        <Hyperlink NavigateUri="https://github.com/AlexAkulov/putty-color-themes" TextDecorations="{x:Null}" Click="Hyperlink_Click" >
+                                        <Hyperlink NavigateUri="https://github.com/AlexAkulov/putty-color-themes" TextDecorations="{x:Null}" utils:HyperlinkHelper.IsOpenExternal="True" >
                                             https://github.com/AlexAkulov/putty-color-themes
                                         </Hyperlink>
                                     </TextBlock>
                                     <TextBlock>
-                                        <Hyperlink NavigateUri="https://github.com/xiangyuecn/RSA-csharp" TextDecorations="{x:Null}" Click="Hyperlink_Click" >
+                                        <Hyperlink NavigateUri="https://github.com/xiangyuecn/RSA-csharp" TextDecorations="{x:Null}" utils:HyperlinkHelper.IsOpenExternal="True" >
                                             https://github.com/xiangyuecn/RSA-csharp
+                                        </Hyperlink>
+                                    </TextBlock>
+                                    <TextBlock>
+                                        <Hyperlink NavigateUri="https://github.com/robinrodricks/FluentFTP" TextDecorations="{x:Null}" utils:HyperlinkHelper.IsOpenExternal="True" >
+                                            https://github.com/robinrodricks/FluentFTP
+                                        </Hyperlink>
+                                    </TextBlock>
+                                    <TextBlock>
+                                        <Hyperlink NavigateUri="https://github.com/sshnet/SSH.NET" TextDecorations="{x:Null}" utils:HyperlinkHelper.IsOpenExternal="True" >
+                                            https://github.com/sshnet/SSH.NET
                                         </Hyperlink>
                                     </TextBlock>
                                 </StackPanel>
@@ -239,7 +255,7 @@
                         <controls:ButtonEx Style="{StaticResource MainColor2Button}"
                                 Padding="0 1 0 0" Width="80" Height="20"
                                 HorizontalAlignment="Center"
-                                Command="{Binding CmdGoServerListPage}"
+                                Click="ButtonBack_OnClick"
                                 BorderThickness="0" Content="Back">
                         </controls:ButtonEx>
                     </Grid>
